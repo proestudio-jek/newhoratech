@@ -3,16 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -27,6 +21,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { Button } from "./ui/button";
+import React from "react";
 
 const navItems = [
   { href: "/", label: "Início", icon: Home },
@@ -34,42 +29,28 @@ const navItems = [
   { href: "/videos", label: "Vídeos", icon: Video },
 ];
 
-function MainNav() {
+function MainNav({ isMobile }: { isMobile: boolean }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const Comp = isMobile ? 'div' : 'nav';
+  
+  const navLinks = (
+    <>
+      {navItems.map((item) => (
+        <Button key={item.href} asChild variant={pathname === item.href ? "secondary" : "ghost"}>
+          <Link href={item.href}>
+            <item.icon className="mr-2 h-4 w-4" />
+            {item.label}
+          </Link>
+        </Button>
+      ))}
+    </>
+  );
 
   return (
-    <SidebarMenu>
-      {navItems.map((item) => (
-        <SidebarMenuItem key={item.href}>
-          <SidebarMenuButton
-            asChild
-            isActive={pathname === item.href}
-            tooltip={item.label}
-          >
-            <Link href={item.href}>
-              <item.icon />
-              <span>{item.label}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-      <SidebarMenuItem>
-        {user ? (
-          <SidebarMenuButton onClick={logout} tooltip="Sair">
-            <LogOut />
-            <span>Sair</span>
-          </SidebarMenuButton>
-        ) : (
-          <SidebarMenuButton asChild isActive={pathname === "/login"} tooltip="Entrar">
-            <Link href="/login">
-              <LogIn />
-              <span>Entrar</span>
-            </Link>
-          </SidebarMenuButton>
-        )}
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <Comp className={isMobile ? "flex flex-col space-y-2" : "hidden md:flex md:items-center md:space-x-4"}>
+       {navLinks}
+    </Comp>
   );
 }
 
@@ -77,6 +58,8 @@ function SiteHeader() {
   const { isAdmin, setIsAdmin } = useAdmin();
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
+
 
   // Hide header on auth pages
   if (pathname === '/login' || pathname === '/signup') {
@@ -84,82 +67,108 @@ function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger>
-          <Menu />
-        </SidebarTrigger>
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Music className="size-5" />
-          </div>
-          <h1 className="hidden font-headline text-2xl font-bold text-primary sm:block">
-            Semente da Fé
-          </h1>
-        </Link>
-      </div>
+    <header className="sticky top-0 z-40 w-full border-b bg-background">
+      <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
+        <div className="flex gap-6 md:gap-10">
+          <Link href="/" className="flex items-center space-x-2">
+             <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Music className="size-5" />
+             </div>
+            <span className="inline-block font-bold font-headline text-primary text-2xl">Semente da Fé</span>
+          </Link>
+          <MainNav isMobile={false} />
+        </div>
 
-      <div className="flex items-center gap-4">
-        {user && (
-          <>
-            <Label htmlFor="admin-mode">Modo Admin</Label>
-            <Switch
-              id="admin-mode"
-              checked={isAdmin}
-              onCheckedChange={setIsAdmin}
-              aria-label="Toggle admin mode"
-            />
-          </>
-        )}
-        {user ? (
-          <Button variant="ghost" size="sm" onClick={logout}>
-            Sair
-          </Button>
-        ) : (
-          <Button asChild size="sm">
-            <Link href="/login">Entrar</Link>
-          </Button>
-        )}
+        <div className="flex flex-1 items-center justify-end space-x-4">
+           {user && (
+            <div className="hidden items-center space-x-2 md:flex">
+              <Label htmlFor="admin-mode">Modo Admin</Label>
+              <Switch
+                id="admin-mode"
+                checked={isAdmin}
+                onCheckedChange={setIsAdmin}
+                aria-label="Toggle admin mode"
+              />
+            </div>
+          )}
+          <nav className="hidden md:flex items-center space-x-2">
+            {user ? (
+              <Button variant="ghost" size="sm" onClick={logout}>
+                Sair
+              </Button>
+            ) : (
+              <Button asChild size="sm">
+                <Link href="/login">Entrar</Link>
+              </Button>
+            )}
+          </nav>
+            <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
+                <SheetTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        className="md:hidden"
+                    >
+                        <Menu className="h-5 w-5" />
+                        <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="pr-0">
+                   <Link href="/" className="flex items-center" onClick={() => setIsMobileNavOpen(false)}>
+                     <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground mr-2">
+                        <Music className="size-5" />
+                     </div>
+                    <span className="font-bold font-headline text-primary text-xl">Semente da Fé</span>
+                  </Link>
+                  <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+                    <div className="flex flex-col space-y-3">
+                       <MainNav isMobile={true} />
+                       <div className="flex flex-col space-y-2 pt-4 border-t">
+                        {user ? (
+                           <>
+                            <div className="flex items-center space-x-2">
+                                <Label htmlFor="admin-mode-mobile">Modo Admin</Label>
+                                <Switch
+                                id="admin-mode-mobile"
+                                checked={isAdmin}
+                                onCheckedChange={setIsAdmin}
+                                aria-label="Toggle admin mode"
+                                />
+                            </div>
+                            <Button variant="ghost" onClick={() => { logout(); setIsMobileNavOpen(false);}}>
+                                <LogOut className="mr-2 h-4 w-4" /> Sair
+                            </Button>
+                           </>
+                        ) : (
+                            <Button asChild onClick={() => setIsMobileNavOpen(false)}>
+                                <Link href="/login">
+                                <LogIn className="mr-2 h-4 w-4" /> Entrar
+                                </Link>
+                            </Button>
+                        )}
+                       </div>
+                    </div>
+                  </div>
+                </SheetContent>
+            </Sheet>
+        </div>
       </div>
     </header>
   );
 }
+
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full flex-col">
-        <SiteHeader />
+    <div className="flex min-h-screen w-full flex-col">
+      <SiteHeader />
         {isAuthPage ? (
           <main className="flex-1">{children}</main>
         ) : (
-          <>
-            <Sidebar
-              variant="sidebar"
-              collapsible="offcanvas"
-              className="border-sidebar-border"
-            >
-              <SidebarHeader>
-                <div className="flex items-center gap-2 p-2">
-                  <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Music className="size-5" />
-                  </div>
-                  <h1 className="font-headline text-2xl font-bold text-sidebar-foreground">
-                    Semente da Fé
-                  </h1>
-                </div>
-              </SidebarHeader>
-              <SidebarContent>
-                <MainNav />
-              </SidebarContent>
-            </Sidebar>
-            <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
-          </>
+          <main className="flex-1 container p-4 sm:p-6 lg:p-8">{children}</main>
         )}
-      </div>
-    </SidebarProvider>
+    </div>
   );
 }
