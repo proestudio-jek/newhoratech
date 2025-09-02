@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { format, isSameDay } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAdmin } from "@/contexts/AdminContext";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Hymn } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
 import { Music, PlusCircle, Trash2, CalendarHeart } from "lucide-react";
 import { HymnSuggestionModal } from "./hymn-suggestion-modal";
 
@@ -28,6 +28,7 @@ export function HymnCalendar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { isAdmin } = useAdmin();
+  const { user } = useAuth();
 
   const selectedDateStr = date ? format(date, "yyyy-MM-dd") : "";
   const selectedHymns = hymns[selectedDateStr] || [];
@@ -107,7 +108,7 @@ export function HymnCalendar() {
                       {hymn.musicUrl && <Music className="h-5 w-5 text-accent" />}
                       <span className="font-medium">{hymn.title}</span>
                     </div>
-                    {isAdmin && (
+                    {user && isAdmin && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -125,7 +126,7 @@ export function HymnCalendar() {
                 <p>Nenhum hino agendado para este dia.</p>
               </div>
             )}
-            {isAdmin && date && (
+            {user && isAdmin && date && (
               <Button
                 className="w-full"
                 onClick={() => setIsModalOpen(true)}
