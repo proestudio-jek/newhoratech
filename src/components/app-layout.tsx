@@ -19,6 +19,9 @@ import {
   Video,
   LogIn,
   LogOut,
+  Facebook,
+  Twitter,
+  Instagram,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import React from "react";
@@ -156,6 +159,54 @@ function SiteHeader() {
   );
 }
 
+function SiteFooter() {
+  const pathname = usePathname();
+  if (pathname === '/login' || pathname === '/signup') {
+    return null;
+  }
+
+  return (
+    <footer className="w-full border-t bg-background">
+      <div className="container py-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-2">
+          <Music className="h-6 w-6 text-primary" />
+          <span className="font-bold font-headline text-lg text-primary">Semente da Fé</span>
+        </div>
+        <nav className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm font-medium">
+          <Link href="#" className="text-foreground hover:text-primary transition-colors">
+            Sobre Nós
+          </Link>
+          <Link href="#" className="text-foreground hover:text-primary transition-colors">
+            Contato
+          </Link>
+          <Link href="#" className="text-foreground hover:text-primary transition-colors">
+            Política de Privacidade
+          </Link>
+          <Link href="#" className="text-foreground hover:text-primary transition-colors">
+            Termos de Serviço
+          </Link>
+        </nav>
+        <div className="flex items-center gap-4">
+          <Link href="#" aria-label="Facebook">
+            <Facebook className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
+          </Link>
+          <Link href="#" aria-label="Twitter">
+            <Twitter className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
+          </Link>
+          <Link href="#" aria-label="Instagram">
+            <Instagram className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
+          </Link>
+        </div>
+      </div>
+      <div className="border-t bg-background/50">
+        <div className="container py-4 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Semente da Fé. Todos os direitos reservados.
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -164,11 +215,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <SiteHeader />
+        <div className="flex-1">
         {isAuthPage ? (
-          <main className="flex-1">{children}</main>
+          <main>{children}</main>
         ) : (
-          <main className="flex-1 container p-4 sm:p-6 lg:p-8">{children}</main>
+          <main className="container p-4 sm:p-6 lg:p-8">{children}</main>
         )}
+        </div>
+      <SiteFooter />
     </div>
   );
 }
