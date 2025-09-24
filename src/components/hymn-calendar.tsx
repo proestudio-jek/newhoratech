@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { Hymn } from "@/lib/types";
 import { Music, PlusCircle, Trash2, CalendarHeart } from "lucide-react";
 import { HymnSuggestionModal } from "./hymn-suggestion-modal";
+import { DayContent as DayPickerDayContent } from "react-day-picker";
 
 const initialHymns: Record<string, Hymn[]> = {
   [format(new Date(), "yyyy-MM-dd")]: [
@@ -68,12 +69,12 @@ export function HymnCalendar() {
               locale={ptBR}
               className="w-full"
               components={{
-                DayContent: ({ date, ...props }) => {
-                  const dateStr = format(date, "yyyy-MM-dd");
+                DayContent: (props) => {
+                  const dateStr = format(props.date, "yyyy-MM-dd");
                   const hasHymns = hymns[dateStr] && hymns[dateStr].length > 0;
                   return (
                     <div className="relative h-full w-full">
-                      <span {...props} />
+                      <DayPickerDayContent {...props} />
                       {hasHymns && (
                         <div className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-accent"></div>
                       )}
@@ -138,7 +139,7 @@ export function HymnCalendar() {
           </CardContent>
         </Card>
       </div>
-      {date && (
+      {user && isAdmin && date && (
         <HymnSuggestionModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}

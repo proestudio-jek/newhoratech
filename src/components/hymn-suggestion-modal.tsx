@@ -27,11 +27,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Sparkles, Loader2, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Hymn } from "@/lib/types";
 import { suggestHymnsForDate } from "@/ai/flows/suggest-hymns-for-date";
+import { useAdmin } from "@/contexts/AdminContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres."),
@@ -53,6 +54,8 @@ export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd }: HymnSu
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { isAdmin } = useAdmin();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,6 +103,10 @@ export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd }: HymnSu
     setSuggestions([]);
     suggestionForm.reset();
   };
+  
+  if (!user || !isAdmin) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
