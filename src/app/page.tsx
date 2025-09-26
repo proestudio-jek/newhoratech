@@ -22,22 +22,19 @@ export default function Home() {
       title: "Semente da Fé",
       href: "/semente-da-fe",
       icon: Music,
-      image: "https://picsum.photos/seed/faith/1200/400",
-      hint: "church music",
+      gradient: "from-purple-500 to-indigo-600",
     },
     {
       title: "Louvores de Sião",
       href: "/louvores-de-siao",
       icon: Users,
-      image: "https://picsum.photos/seed/praise/1200/400",
-      hint: "choir singing",
+      gradient: "from-sky-500 to-blue-600",
     },
     {
       title: "Grande Coral",
       href: "/grande-coral",
       icon: Mic,
-      image: "https://picsum.photos/seed/choir/1200/400",
-      hint: "concert hall",
+      gradient: "from-fuchsia-500 to-pink-600",
     },
   ];
 
@@ -112,15 +109,8 @@ export default function Home() {
                     <Card className="overflow-hidden relative group">
                       <CardContent className="p-0">
                         <div
-                          className="relative w-full aspect-video flex flex-col items-center justify-center p-8 transition-all duration-500"
+                          className={`relative w-full aspect-video flex flex-col items-center justify-center p-8 transition-all duration-500 bg-gradient-to-br ${banner.gradient} hover:opacity-90`}
                         >
-                          <Image
-                            src={banner.image}
-                            alt={banner.title}
-                            fill
-                            className="object-cover brightness-50 group-hover:brightness-75 transition-all"
-                            data-ai-hint={banner.hint}
-                          />
                           <div className="relative z-10 text-center text-white">
                             <h3 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">
                               {banner.title}
