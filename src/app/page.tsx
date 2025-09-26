@@ -14,7 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { ArrowRight, Mic } from "lucide-react";
+import { ArrowRight, Mic, Users, Music } from "lucide-react";
 
 export default function Home() {
   const carouselBanners = [
@@ -83,11 +83,13 @@ export default function Home() {
               <Card key={section.href} className={`flex flex-col group hover:border-primary transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${section.gradient}`}>
                 <CardHeader className="flex-row items-center gap-4">
                   <div className="flex size-12 items-center justify-center rounded-lg bg-white/50 text-primary shadow-inner">
-                    {section.icon ? (
-                      <section.icon className="size-6" />
-                    ) : section.iconSrc ? (
-                       <Image src={section.iconSrc} alt={`${section.title} icon`} width={24} height={24} className="object-contain" />
-                    ) : null}
+                    <div className="relative w-6 h-6">
+                      {section.icon ? (
+                        <section.icon className="size-full" />
+                      ) : section.iconSrc ? (
+                        <Image src={section.iconSrc} alt={`${section.title} icon`} fill className="object-contain" />
+                      ) : null}
+                    </div>
                   </div>
                   <div>
                     <CardTitle className="text-xl text-primary">{section.title}</CardTitle>
@@ -131,14 +133,13 @@ export default function Home() {
                               <h3 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">
                                 {banner.title}
                               </h3>
-                               {banner.icon ? (
-                                <banner.icon className="size-12 mx-auto mt-4" />
-                               ) : banner.iconSrc ? (
-                                <div className="relative w-12 h-12 mx-auto mt-4">
-                                  <Image src={banner.iconSrc} alt={`${banner.title} icon`} fill className="object-contain" />
-
-                                </div>
-                               ): null}
+                               <div className="relative w-12 h-12 mx-auto mt-4">
+                                {banner.icon ? (
+                                  <banner.icon className="size-full" />
+                                ) : banner.iconSrc ? (
+                                    <Image src={banner.iconSrc} alt={`${banner.title} icon`} fill className="object-contain" />
+                                ): null}
+                               </div>
                             </div>
                           </div>
                         )}
