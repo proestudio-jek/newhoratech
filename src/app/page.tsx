@@ -22,19 +22,19 @@ export default function Home() {
     {
       title: "Semente da Fé",
       href: "/semente-da-fe",
-      imgSrc: "/semente-da-fe-banner.png",
-      iconSrc: "/semente-da-fe-icon.png",
+      iconSrc: "/icon-semente.png",
+      gradient: "from-blue-500 to-purple-600",
     },
     {
       title: "Louvores de Sião",
       href: "/louvores-de-siao",
-      iconSrc: "/louvores-de-siao-icon.png",
+      iconSrc: "/icon-louvores.png",
       gradient: "from-sky-500 to-blue-600",
     },
     {
       title: "Grande Coral",
       href: "/grande-coral",
-      iconSrc: "/grande-coral-icon.png",
+      iconSrc: "/icon-coral.png",
       gradient: "from-fuchsia-500 to-pink-600",
     },
   ];
@@ -44,22 +44,19 @@ export default function Home() {
       title: "Semente da Fé",
       description: "Hinos, calendários e notícias da Semente da Fé.",
       href: "/semente-da-fe",
-      iconSrc: "/semente-da-fe-icon.png",
-      gradient: "from-blue-100 to-purple-100",
+      iconSrc: "/icon-semente.png",
     },
     {
       title: "Louvores de Sião",
       description: "Explore os louvores e eventos de Sião.",
       href: "/louvores-de-siao",
-      iconSrc: "/louvores-de-siao-icon.png",
-      gradient: "from-sky-100 to-blue-100",
+      iconSrc: "/icon-louvores.png",
     },
     {
       title: "Grande Coral",
       description: "Apresentações e repertório do Grande Coral.",
       href: "/grande-coral",
-      iconSrc: "/grande-coral-icon.png",
-      gradient: "from-fuchsia-100 to-pink-100",
+      iconSrc: "/icon-coral.png",
     },
   ];
 
@@ -81,15 +78,11 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {sections.map((section) => (
-              <Card key={section.href} className={`flex flex-col group hover:border-primary transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${section.gradient}`}>
+              <Card key={section.href} className={`flex flex-col group hover:border-primary transition-all duration-300 transform hover:scale-105`}>
                 <CardHeader className="flex-row items-center gap-4">
                   <div className="flex size-12 items-center justify-center rounded-lg bg-white/50 text-primary shadow-inner">
                     <div className="relative w-8 h-8">
-                      {section.icon ? (
-                        <section.icon className="size-full" />
-                      ) : section.iconSrc ? (
-                        <Image src={section.iconSrc} alt={`${section.title} icon`} fill className="object-contain" />
-                      ) : null}
+                       <Image src={section.iconSrc} alt={`${section.title} icon`} fill className="object-contain" />
                     </div>
                   </div>
                   <div>
@@ -135,11 +128,7 @@ export default function Home() {
                                 {banner.title}
                               </h3>
                                <div className="relative w-12 h-12 mx-auto mt-4">
-                                {banner.icon ? (
-                                  <banner.icon className="size-full" />
-                                ) : banner.iconSrc ? (
-                                    <Image src={banner.iconSrc} alt={`${banner.title} icon`} fill className="object-contain" />
-                                ): null}
+                                <Image src={banner.iconSrc} alt={`${banner.title} icon`} fill className="object-contain" />
                                </div>
                             </div>
                           </div>
