@@ -9,7 +9,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { ArrowRight, Calendar, Users, Video } from "lucide-react";
+import { ArrowRight, Calendar, Users, Video, Mic, Music2 } from "lucide-react";
 
 export default function Home() {
   const featureSections = [
@@ -30,6 +30,27 @@ export default function Home() {
       description: "Explore e participe de nossas comunidades: Semente da Fé, Louvores de Sião e Grande Coral.",
       href: "/semente-da-fe",
       icon: Users,
+    },
+  ];
+
+  const communitySections = [
+    {
+      title: "Semente da Fé",
+      description: "Hinos, calendários e notícias da comunidade Semente da Fé.",
+      href: "/semente-da-fe",
+      icon: Music2,
+    },
+    {
+      title: "Louvores de Sião",
+      description: "Explore os louvores e eventos de Sião.",
+      href: "/louvores-de-siao",
+      icon: Users,
+    },
+    {
+      title: "Grande Coral",
+      description: "Apresentações e repertório do Grande Coral.",
+      href: "/grande-coral",
+      icon: Mic,
     },
   ];
 
@@ -89,6 +110,49 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {featureSections.map((section) => (
+            <Card
+              key={section.href}
+              className="group flex transform flex-col text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+            >
+              <CardHeader className="items-center">
+                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <section.icon className="size-8" />
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-grow flex-col gap-4">
+                <CardTitle className="text-2xl text-primary">
+                  {section.title}
+                </CardTitle>
+                <CardDescription className="flex-grow text-base text-foreground/70">
+                  {section.description}
+                </CardDescription>
+                <Link
+                  href={section.href}
+                  className={buttonVariants({
+                    variant: "link",
+                    className: "group-hover:text-primary",
+                  })}
+                >
+                  Acessar <ArrowRight className="ml-2 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Communities Section */}
+      <section id="communities" className="container space-y-12">
+        <div className="text-center">
+          <h2 className="font-headline text-4xl font-bold text-primary">
+            Nossas Comunidades
+          </h2>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Explore o conteúdo exclusivo de cada grupo musical.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          {communitySections.map((section) => (
             <Card
               key={section.href}
               className="group flex transform flex-col text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"

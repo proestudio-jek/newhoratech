@@ -26,17 +26,30 @@ import {
   Twitter,
   Instagram,
   Users,
+  Mic,
+  Music2,
 } from "lucide-react";
 import { Button, buttonVariants } from "./ui/button";
 import React from "react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { href: "/", label: "Início", icon: Home },
   { href: "/calendar", label: "Calendário", icon: CalendarDays },
   { href: "/videos", label: "Vídeos", icon: Video },
-  { href: "/semente-da-fe", label: "Comunidades", icon: Users },
 ];
+
+const communityItems = [
+    { href: "/semente-da-fe", label: "Semente da Fé", icon: Music2 },
+    { href: "/louvores-de-siao", label: "Louvores de Sião", icon: Users },
+    { href: "/grande-coral", label: "Grande Coral", icon: Mic },
+]
 
 function MainNav({ isMobile }: { isMobile: boolean }) {
   const pathname = usePathname();
@@ -49,9 +62,8 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
           asChild
           variant={pathname === item.href ? (isMobile ? 'secondary' : 'link') : "ghost"}
           className={cn(
-            isMobile
-              ? "w-full justify-start"
-              : "text-primary-foreground hover:bg-transparent hover:text-primary-foreground/80"
+            "justify-start",
+            !isMobile && "text-primary-foreground hover:bg-transparent hover:text-primary-foreground/80"
           )}
         >
           <Link href={item.href}>
@@ -60,6 +72,44 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
           </Link>
         </Button>
       ))}
+      
+      {isMobile ? (
+         <>
+            <p className="px-4 text-sm font-medium text-muted-foreground pt-4 border-t">Comunidades</p>
+            {communityItems.map((item) => (
+                 <Button
+                    key={item.href}
+                    asChild
+                    variant={pathname === item.href ? 'secondary' : "ghost"}
+                    className="justify-start"
+                    >
+                    <Link href={item.href}>
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {item.label}
+                    </Link>
+                </Button>
+            ))}
+         </>
+      ) : (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="text-primary-foreground hover:bg-transparent hover:text-primary-foreground/80">
+                   <Users className="mr-2 h-4 w-4"/>
+                   Comunidades
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                {communityItems.map((item) => (
+                     <DropdownMenuItem key={item.href} asChild>
+                        <Link href={item.href}>
+                            <item.icon className="mr-2 h-4 w-4" />
+                            {item.label}
+                        </Link>
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </>
   );
 
