@@ -15,26 +15,26 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { ArrowRight, Mic, Users, Music } from "lucide-react";
+import { ArrowRight, Music, Users, Mic } from "lucide-react";
 
 export default function Home() {
   const carouselBanners = [
     {
       title: "Semente da Fé",
       href: "/semente-da-fe",
-      iconSrc: "/icon-semente.png",
+      icon: Music,
       gradient: "from-blue-500 to-purple-600",
     },
     {
       title: "Louvores de Sião",
       href: "/louvores-de-siao",
-      iconSrc: "/icon-louvores.png",
+      icon: Users,
       gradient: "from-sky-500 to-blue-600",
     },
     {
       title: "Grande Coral",
       href: "/grande-coral",
-      iconSrc: "/icon-coral.png",
+      icon: Mic,
       gradient: "from-fuchsia-500 to-pink-600",
     },
   ];
@@ -44,19 +44,22 @@ export default function Home() {
       title: "Semente da Fé",
       description: "Hinos, calendários e notícias da Semente da Fé.",
       href: "/semente-da-fe",
-      iconSrc: "/icon-semente.png",
+      icon: Music,
+      gradient: "from-blue-100 to-purple-100",
     },
     {
       title: "Louvores de Sião",
       description: "Explore os louvores e eventos de Sião.",
       href: "/louvores-de-siao",
-      iconSrc: "/icon-louvores.png",
+      icon: Users,
+      gradient: "from-sky-100 to-blue-100",
     },
     {
       title: "Grande Coral",
       description: "Apresentações e repertório do Grande Coral.",
       href: "/grande-coral",
-      iconSrc: "/icon-coral.png",
+      icon: Mic,
+      gradient: "from-fuchsia-100 to-pink-100",
     },
   ];
 
@@ -78,12 +81,10 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {sections.map((section) => (
-              <Card key={section.href} className={`flex flex-col group hover:border-primary transition-all duration-300 transform hover:scale-105`}>
+              <Card key={section.href} className={`flex flex-col group hover:border-primary transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${section.gradient}`}>
                 <CardHeader className="flex-row items-center gap-4">
                   <div className="flex size-12 items-center justify-center rounded-lg bg-white/50 text-primary shadow-inner">
-                    <div className="relative w-8 h-8">
-                       <Image src={section.iconSrc} alt={`${section.title} icon`} fill className="object-contain" />
-                    </div>
+                    <section.icon className="size-6" />
                   </div>
                   <div>
                     <CardTitle className="text-xl text-primary">{section.title}</CardTitle>
@@ -111,15 +112,6 @@ export default function Home() {
                  <Link href={banner.href}>
                     <Card className="overflow-hidden relative group">
                       <CardContent className="p-0">
-                        {banner.imgSrc ? (
-                           <Image
-                            src={banner.imgSrc}
-                            alt={banner.title}
-                            width={1280}
-                            height={720}
-                            className="aspect-video w-full object-cover"
-                          />
-                        ) : (
                           <div
                             className={`relative w-full aspect-video flex flex-col items-center justify-center p-8 transition-all duration-500 bg-gradient-to-br ${banner.gradient} hover:opacity-90`}
                           >
@@ -128,11 +120,10 @@ export default function Home() {
                                 {banner.title}
                               </h3>
                                <div className="relative w-12 h-12 mx-auto mt-4">
-                                <Image src={banner.iconSrc} alt={`${banner.title} icon`} fill className="object-contain" />
+                                <banner.icon className="size-12" />
                                </div>
                             </div>
                           </div>
-                        )}
                       </CardContent>
                     </Card>
                  </Link>
