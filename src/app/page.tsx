@@ -39,18 +39,21 @@ export default function Home() {
       description: "Hinos, calendários e notícias da comunidade Semente da Fé.",
       href: "/semente-da-fe",
       icon: Music2,
+      gradient: "from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50",
     },
     {
       title: "Louvores de Sião",
       description: "Explore os louvores e eventos de Sião.",
       href: "/louvores-de-siao",
       icon: Users,
+      gradient: "from-sky-100 to-blue-100 dark:from-sky-900/50 dark:to-blue-900/50",
     },
     {
       title: "Grande Coral",
       description: "Apresentações e repertório do Grande Coral.",
       href: "/grande-coral",
       icon: Mic,
+      gradient: "from-fuchsia-100 to-pink-100 dark:from-fuchsia-900/50 dark:to-pink-900/50",
     },
   ];
 
@@ -155,10 +158,10 @@ export default function Home() {
           {communitySections.map((section) => (
             <Card
               key={section.href}
-              className="group flex transform flex-col text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+              className={`group flex transform flex-col text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br ${section.gradient}`}
             >
               <CardHeader className="items-center">
-                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex size-14 items-center justify-center rounded-full bg-white/50 dark:bg-black/20 text-primary">
                   <section.icon className="size-8" />
                 </div>
               </CardHeader>
