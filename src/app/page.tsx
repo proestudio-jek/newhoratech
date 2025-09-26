@@ -1,6 +1,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,131 +9,141 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { ArrowRight, Music, Users, Mic } from "lucide-react";
+import { ArrowRight, Calendar, Users, Video } from "lucide-react";
 
 export default function Home() {
-  const carouselBanners = [
+  const featureSections = [
     {
-      title: "Semente da Fé",
+      title: "Calendário de Hinos",
+      description: "Acesse o calendário litúrgico completo e planeje os hinos para cada ocasião especial.",
+      href: "/calendar",
+      icon: Calendar,
+    },
+    {
+      title: "Galeria de Vídeos",
+      description: "Assista a performances, clipes e momentos de adoração em nossa galeria exclusiva.",
+      href: "/videos",
+      icon: Video,
+    },
+    {
+      title: "Comunidades Musicais",
+      description: "Explore e participe de nossas comunidades: Semente da Fé, Louvores de Sião e Grande Coral.",
       href: "/semente-da-fe",
-      icon: Music,
-      gradient: "from-blue-500 to-purple-600",
-    },
-    {
-      title: "Louvores de Sião",
-      href: "/louvores-de-siao",
       icon: Users,
-      gradient: "from-sky-500 to-blue-600",
-    },
-    {
-      title: "Grande Coral",
-      href: "/grande-coral",
-      icon: Mic,
-      gradient: "from-fuchsia-500 to-pink-600",
-    },
-  ];
-
-  const sections = [
-    {
-      title: "Semente da Fé",
-      description: "Hinos, calendários e notícias da Semente da Fé.",
-      href: "/semente-da-fe",
-      icon: Music,
-      gradient: "from-blue-100 to-purple-100",
-    },
-    {
-      title: "Louvores de Sião",
-      description: "Explore os louvores e eventos de Sião.",
-      href: "/louvores-de-siao",
-      icon: Users,
-      gradient: "from-sky-100 to-blue-100",
-    },
-    {
-      title: "Grande Coral",
-      description: "Apresentações e repertório do Grande Coral.",
-      href: "/grande-coral",
-      icon: Mic,
-      gradient: "from-fuchsia-100 to-pink-100",
     },
   ];
 
   return (
-    <div className="space-y-12">
-      <section className="text-center">
-        <h1 className="font-headline text-5xl md:text-7xl font-black text-primary tracking-tight">
-          Bem-vindo à PROMUSIC
-        </h1>
-        <p className="mt-4 text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto">
-          Seu recurso diário para hinos e louvores que inspiram a alma. Explore nosso calendário litúrgico e enriqueça sua adoração.
-        </p>
-      </section>
-      
-      <section className="space-y-6">
-          <div className="text-center">
-            <h2 className="font-headline text-4xl font-bold text-primary">Nossas Comunidades</h2>
-            <p className="mt-2 text-lg text-muted-foreground">Explore o conteúdo de cada grupo.</p>
+    <div className="space-y-24 pb-24">
+      {/* Hero Section */}
+      <section className="relative -mt-8 -mx-8">
+        <div className="relative h-[60vh] min-h-[500px] w-full">
+          <Image
+            src="https://picsum.photos/seed/music-hero/1800/1000"
+            alt="Pessoas cantando em um coral"
+            data-ai-hint="gospel choir singing"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/30 to-transparent" />
+        </div>
+        <div className="container absolute bottom-0 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 md:top-auto md:translate-y-0 md:bottom-16">
+           <div className="max-w-2xl text-center md:text-left">
+            <h1 className="font-headline text-5xl md:text-7xl font-black text-primary tracking-tight">
+              Sua jornada musical começa aqui.
+            </h1>
+            <p className="mt-4 text-lg md:text-xl text-foreground/80">
+              PROMUSIC é o seu guia definitivo para hinos, louvores e adoração.
+              Encontre inspiração diária e conecte-se com sua fé através da
+              música.
+            </p>
+            <div className="mt-8 flex gap-4 justify-center md:justify-start">
+              <Link
+                href="/signup"
+                className={buttonVariants({ size: "lg" })}
+              >
+                Começar Agora <ArrowRight />
+              </Link>
+              <Link
+                href="#features"
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+              >
+                Saber Mais
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {sections.map((section) => (
-              <Card key={section.href} className={`flex flex-col group hover:border-primary transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${section.gradient}`}>
-                <CardHeader className="flex-row items-center gap-4">
-                  <div className="flex size-12 items-center justify-center rounded-lg bg-white/50 text-primary shadow-inner">
-                    <section.icon className="size-6" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl text-primary">{section.title}</CardTitle>
-                    <CardDescription className="text-foreground/80">{section.description}</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-grow flex items-end justify-end">
-                  <Link href={section.href} className="text-sm font-semibold text-primary inline-flex items-center gap-1 group-hover:underline">
-                    Ver mais <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        </div>
       </section>
 
-      <section>
-        <Carousel 
-          className="w-full max-w-5xl mx-auto" 
-          opts={{ loop: true }}
-        >
-          <CarouselContent>
-            {carouselBanners.map((banner, index) => (
-              <CarouselItem key={index}>
-                 <Link href={banner.href}>
-                    <Card className="overflow-hidden relative group">
-                      <CardContent className="p-0">
-                          <div
-                            className={`relative w-full aspect-video flex flex-col items-center justify-center p-8 transition-all duration-500 bg-gradient-to-br ${banner.gradient} hover:opacity-90`}
-                          >
-                            <div className="relative z-10 text-center text-white">
-                              <h3 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">
-                                {banner.title}
-                              </h3>
-                               <div className="relative w-12 h-12 mx-auto mt-4">
-                                <banner.icon className="size-12" />
-                               </div>
-                            </div>
-                          </div>
-                      </CardContent>
-                    </Card>
-                 </Link>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="ml-16" />
-          <CarouselNext className="mr-16" />
-        </Carousel>
+      {/* Features Section */}
+      <section id="features" className="container space-y-12">
+        <div className="text-center">
+          <h2 className="font-headline text-4xl font-bold text-primary">
+            Explore a Plataforma
+          </h2>
+          <p className="mt-2 text-lg text-muted-foreground">
+            Tudo o que você precisa para uma experiência de adoração completa.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          {featureSections.map((section) => (
+            <Card
+              key={section.href}
+              className="group flex transform flex-col text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+            >
+              <CardHeader className="items-center">
+                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <section.icon className="size-8" />
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-grow flex-col gap-4">
+                <CardTitle className="text-2xl text-primary">
+                  {section.title}
+                </CardTitle>
+                <CardDescription className="flex-grow text-base text-foreground/70">
+                  {section.description}
+                </CardDescription>
+                <Link
+                  href={section.href}
+                  className={buttonVariants({
+                    variant: "link",
+                    className: "group-hover:text-primary",
+                  })}
+                >
+                  Acessar <ArrowRight className="ml-2 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container">
+        <div className="rounded-lg bg-gradient-to-r from-primary via-purple-500 to-fuchsia-500 p-12 text-center text-primary-foreground">
+          <h2 className="font-headline text-4xl font-bold">
+            Junte-se à Comunidade PROMUSIC
+          </h2>
+          <p className="mt-4 text-lg opacity-90">
+            Crie sua conta gratuita e comece a explorar um universo de música e
+            adoração hoje mesmo.
+          </p>
+          <div className="mt-8">
+            <Link
+              href="/signup"
+              className={buttonVariants({
+                size: "lg",
+                variant: "secondary",
+                className: "bg-white/90 hover:bg-white text-primary",
+              })}
+            >
+              Criar Conta Grátis
+              <ArrowRight />
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );
