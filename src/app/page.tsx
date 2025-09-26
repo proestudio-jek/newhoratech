@@ -14,7 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { ArrowRight, Users, Mic } from "lucide-react";
+import { ArrowRight, Mic } from "lucide-react";
 
 export default function Home() {
   const carouselBanners = [
@@ -82,9 +82,9 @@ export default function Home() {
                   <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     {section.icon ? (
                       <section.icon className="size-6" />
-                    ) : section.iconSrc && (
+                    ) : section.iconSrc ? (
                        <Image src={section.iconSrc} alt={`${section.title} icon`} width={24} height={24} className="object-contain" />
-                    )}
+                    ) : null}
                   </div>
                   <div>
                     <CardTitle className="text-xl">{section.title}</CardTitle>
@@ -130,11 +130,11 @@ export default function Home() {
                               </h3>
                                {banner.icon ? (
                                 <banner.icon className="size-12 mx-auto mt-4" />
-                               ) : banner.iconSrc && (
+                               ) : banner.iconSrc ? (
                                 <div className="relative w-12 h-12 mx-auto mt-4">
                                   <Image src={banner.iconSrc} alt={`${banner.title} icon`} fill className="object-contain" />
                                 </div>
-                               )}
+                               ): null}
                             </div>
                           </div>
                         )}
