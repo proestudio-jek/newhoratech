@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -22,7 +23,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Music } from "lucide-react";
+import { Music, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 const formSchema = z
   .object({
@@ -37,6 +39,7 @@ const formSchema = z
 
 export default function SignupPage() {
   const { signup } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,9 +50,14 @@ export default function SignupPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // We are not using the password for this mock signup
-    signup(values.email);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    try {
+      await signup(values.email, values.password);
+    } catch(error) {
+      // Error is handled by the AuthContext, stop loading
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -128,7 +136,8 @@ export default function SignupPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Criar Conta
               </Button>
             </form>

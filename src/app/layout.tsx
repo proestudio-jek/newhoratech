@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -34,12 +35,12 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AdminProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <AdminProvider>
             <AppLayout>{children}</AppLayout>
             <Toaster />
-          </AuthProvider>
-        </AdminProvider>
+          </AdminProvider>
+        </AuthProvider>
       </body>
     </html>
   );

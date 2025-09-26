@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -37,7 +38,6 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
   const { user, logout } = useAuth();
   const Comp = isMobile ? 'div' : 'nav';
   
-  // Filtered navigation items
   const filteredNavItems = navItems.filter(item => item.href === "/");
 
   const navLinks = (
@@ -62,7 +62,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
 
 function SiteHeader() {
   const { isAdmin, setIsAdmin } = useAdmin();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
@@ -82,21 +82,21 @@ function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-primary text-primary-foreground">
+    <header className="sticky top-0 z-40 w-full border-b bg-purple-700 text-white">
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <div className="flex gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
-             <div className="flex size-9 items-center justify-center rounded-lg bg-primary-foreground text-primary">
+             <div className="flex size-9 items-center justify-center rounded-lg bg-white text-purple-700">
                 <Music className="size-5" />
              </div>
-            <span className="inline-block font-bold font-headline text-primary-foreground text-2xl">PROMUSIC</span>
+            <span className="inline-block font-bold font-headline text-white text-2xl">PROMUSIC</span>
           </Link>
           <MainNav isMobile={false} />
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
           <div className="hidden items-center space-x-2 md:flex">
-            <Label htmlFor="admin-mode" className="text-primary-foreground">Modo Admin</Label>
+            <Label htmlFor="admin-mode" className="text-white">Modo Admin</Label>
             <Switch
               id="admin-mode"
               checked={isAdmin}
@@ -106,11 +106,11 @@ function SiteHeader() {
           </div>
           <nav className="hidden md:flex items-center space-x-2">
             {user ? (
-              <Button variant="ghost" size="sm" onClick={() => router.push('/login')} className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+              <Button variant="ghost" size="sm" onClick={logout} className="text-white hover:bg-purple-600 hover:text-white">
                 Sair
               </Button>
             ) : (
-              <Button asChild size="sm" variant="secondary">
+              <Button asChild size="sm" variant="secondary" className="bg-white text-purple-700 hover:bg-gray-200">
                 <Link href="/login">Entrar</Link>
               </Button>
             )}
@@ -119,7 +119,7 @@ function SiteHeader() {
                 <SheetTrigger asChild>
                     <Button
                         variant="ghost"
-                        className="md:hidden text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground"
+                        className="md:hidden text-white hover:bg-purple-600 hover:text-white"
                     >
                         <Menu className="h-5 w-5" />
                         <span className="sr-only">Toggle Menu</span>
@@ -150,7 +150,7 @@ function SiteHeader() {
                         </div>
                         {user ? (
                            <>
-                            <Button variant="ghost" onClick={() => { router.push('/login'); setIsMobileNavOpen(false);}}>
+                            <Button variant="ghost" onClick={() => { logout(); setIsMobileNavOpen(false);}}>
                                 <LogOut className="mr-2 h-4 w-4" /> Sair
                             </Button>
                            </>

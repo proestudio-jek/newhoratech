@@ -1,6 +1,8 @@
+
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 type AdminContextType = {
   isAdmin: boolean;
@@ -11,6 +13,15 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const { user } = useAuth();
+
+  // Automatically disable admin mode if user logs out.
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+    }
+  }, [user]);
+
   return (
     <AdminContext.Provider value={{ isAdmin, setIsAdmin }}>
       {children}
