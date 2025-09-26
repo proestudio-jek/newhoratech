@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -13,24 +14,30 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { ArrowRight, Music, Users, Mic } from "lucide-react";
+import { ArrowRight, Music, Users, Mic, Sprout } from "lucide-react";
 
 export default function Home() {
   const carouselBanners = [
     {
       title: "Semente da Fé",
       href: "/semente-da-fe",
-      gradient: "bg-gradient-to-br from-purple-500 to-indigo-600",
+      icon: Music,
+      image: "https://picsum.photos/seed/faith/1200/400",
+      hint: "church music",
     },
     {
       title: "Louvores de Sião",
       href: "/louvores-de-siao",
-      gradient: "bg-gradient-to-br from-pink-500 to-purple-600",
+      icon: Users,
+      image: "https://picsum.photos/seed/praise/1200/400",
+      hint: "choir singing",
     },
     {
       title: "Grande Coral",
       href: "/grande-coral",
-      gradient: "bg-gradient-to-br from-fuchsia-500 to-pink-600",
+      icon: Mic,
+      image: "https://picsum.photos/seed/choir/1200/400",
+      hint: "concert hall",
     },
   ];
 
@@ -105,11 +112,21 @@ export default function Home() {
                     <Card className="overflow-hidden relative group">
                       <CardContent className="p-0">
                         <div
-                          className={`w-full aspect-video flex flex-col justify-end p-8 transition-all duration-500 group-hover:brightness-110 ${banner.gradient}`}
+                          className="relative w-full aspect-video flex flex-col items-center justify-center p-8 transition-all duration-500"
                         >
-                          <h3 className="font-headline text-4xl md:text-5xl font-bold text-white tracking-tight">
-                            {banner.title}
-                          </h3>
+                          <Image
+                            src={banner.image}
+                            alt={banner.title}
+                            fill
+                            className="object-cover brightness-50 group-hover:brightness-75 transition-all"
+                            data-ai-hint={banner.hint}
+                          />
+                          <div className="relative z-10 text-center text-white">
+                            <h3 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">
+                              {banner.title}
+                            </h3>
+                            <banner.icon className="size-12 mx-auto mt-4" />
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
