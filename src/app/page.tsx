@@ -27,7 +27,7 @@ export default function Home() {
     {
       title: "Louvores de Sião",
       href: "/louvores-de-siao",
-      icon: Users,
+      iconSrc: "/treble-clef.png",
       gradient: "from-sky-500 to-blue-600",
     },
     {
@@ -49,7 +49,7 @@ export default function Home() {
       title: "Louvores de Sião",
       description: "Explore os louvores e eventos de Sião.",
       href: "/louvores-de-siao",
-      icon: Users,
+      iconSrc: "/treble-clef.png",
     },
     {
       title: "Grande Coral",
