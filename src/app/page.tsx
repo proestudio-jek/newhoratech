@@ -22,7 +22,7 @@ export default function Home() {
       title: "Semente da Fé",
       href: "/semente-da-fe",
       imgSrc: "/semente-da-fe-banner.png",
-      iconSrc: "/treble-clef.png"
+      iconSrc: "/treble-clef.png",
     },
     {
       title: "Louvores de Sião",
@@ -44,18 +44,21 @@ export default function Home() {
       description: "Hinos, calendários e notícias da Semente da Fé.",
       href: "/semente-da-fe",
       iconSrc: "/treble-clef.png",
+      gradient: "from-blue-100 to-purple-100",
     },
     {
       title: "Louvores de Sião",
       description: "Explore os louvores e eventos de Sião.",
       href: "/louvores-de-siao",
       iconSrc: "/treble-clef.png",
+      gradient: "from-sky-100 to-blue-100",
     },
     {
       title: "Grande Coral",
       description: "Apresentações e repertório do Grande Coral.",
       href: "/grande-coral",
       icon: Mic,
+      gradient: "from-fuchsia-100 to-pink-100",
     },
   ];
 
@@ -77,9 +80,9 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {sections.map((section) => (
-              <Card key={section.href} className="flex flex-col group hover:border-primary transition-colors">
+              <Card key={section.href} className={`flex flex-col group hover:border-primary transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${section.gradient}`}>
                 <CardHeader className="flex-row items-center gap-4">
-                  <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <div className="flex size-12 items-center justify-center rounded-lg bg-white/50 text-primary shadow-inner">
                     {section.icon ? (
                       <section.icon className="size-6" />
                     ) : section.iconSrc ? (
@@ -87,8 +90,8 @@ export default function Home() {
                     ) : null}
                   </div>
                   <div>
-                    <CardTitle className="text-xl">{section.title}</CardTitle>
-                    <CardDescription>{section.description}</CardDescription>
+                    <CardTitle className="text-xl text-primary">{section.title}</CardTitle>
+                    <CardDescription className="text-foreground/80">{section.description}</CardDescription>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-grow flex items-end justify-end">
@@ -133,6 +136,7 @@ export default function Home() {
                                ) : banner.iconSrc ? (
                                 <div className="relative w-12 h-12 mx-auto mt-4">
                                   <Image src={banner.iconSrc} alt={`${banner.title} icon`} fill className="object-contain" />
+
                                 </div>
                                ): null}
                             </div>
