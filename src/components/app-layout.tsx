@@ -43,7 +43,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
   const navLinks = (
     <>
       {filteredNavItems.map((item) => (
-        <Button key={item.href} asChild variant={pathname === item.href ? "secondary" : "ghost"}>
+        <Button key={item.href} asChild variant={pathname === item.href ? "secondary" : "ghost"} className={!isMobile ? "text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground" : ""}>
           <Link href={item.href}>
             <item.icon className="mr-2 h-4 w-4" />
             {item.label}
@@ -73,14 +73,14 @@ function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background">
+    <header className="sticky top-0 z-40 w-full border-b bg-primary text-primary-foreground">
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <div className="flex gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
-             <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+             <div className="flex size-9 items-center justify-center rounded-lg bg-primary-foreground text-primary">
                 <Music className="size-5" />
              </div>
-            <span className="inline-block font-bold font-headline text-primary text-2xl">PROMUSIC</span>
+            <span className="inline-block font-bold font-headline text-primary-foreground text-2xl">PROMUSIC</span>
           </Link>
           <MainNav isMobile={false} />
         </div>
@@ -88,7 +88,7 @@ function SiteHeader() {
         <div className="flex flex-1 items-center justify-end space-x-4">
            {user && (
             <div className="hidden items-center space-x-2 md:flex">
-              <Label htmlFor="admin-mode">Modo Admin</Label>
+              <Label htmlFor="admin-mode" className="text-primary-foreground">Modo Admin</Label>
               <Switch
                 id="admin-mode"
                 checked={isAdmin}
@@ -99,11 +99,11 @@ function SiteHeader() {
           )}
           <nav className="hidden md:flex items-center space-x-2">
             {user ? (
-              <Button variant="ghost" size="sm" onClick={logout}>
+              <Button variant="ghost" size="sm" onClick={logout} className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
                 Sair
               </Button>
             ) : (
-              <Button asChild size="sm">
+              <Button asChild size="sm" variant="secondary">
                 <Link href="/login">Entrar</Link>
               </Button>
             )}
@@ -112,7 +112,7 @@ function SiteHeader() {
                 <SheetTrigger asChild>
                     <Button
                         variant="ghost"
-                        className="md:hidden"
+                        className="md:hidden text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground"
                     >
                         <Menu className="h-5 w-5" />
                         <span className="sr-only">Toggle Menu</span>
