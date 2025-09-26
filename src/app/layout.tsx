@@ -34,12 +34,12 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          <AdminProvider>
+        <AdminProvider>
+          <AuthProvider>
             <AppLayout>{children}</AppLayout>
             <Toaster />
-          </AdminProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </AdminProvider>
       </body>
     </html>
   );

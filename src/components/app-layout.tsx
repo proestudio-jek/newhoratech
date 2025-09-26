@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -30,8 +30,6 @@ import React from "react";
 
 const navItems = [
   { href: "/", label: "Início", icon: Home },
-  { href: "/calendar", label: "Calendário", icon: CalendarDays },
-  { href: "/videos", label: "Vídeos", icon: Video },
 ];
 
 function MainNav({ isMobile }: { isMobile: boolean }) {
@@ -64,8 +62,9 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
 
 function SiteHeader() {
   const { isAdmin, setIsAdmin } = useAdmin();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
 
 
@@ -73,6 +72,14 @@ function SiteHeader() {
   if (pathname === '/login' || pathname === '/signup') {
     return null;
   }
+  
+  const handleAdminToggle = (checked: boolean) => {
+    if (!user) {
+      router.push('/login');
+    } else {
+      setIsAdmin(checked);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-primary text-primary-foreground">
@@ -88,20 +95,18 @@ function SiteHeader() {
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-           {user && (
-            <div className="hidden items-center space-x-2 md:flex">
-              <Label htmlFor="admin-mode" className="text-primary-foreground">Modo Admin</Label>
-              <Switch
-                id="admin-mode"
-                checked={isAdmin}
-                onCheckedChange={setIsAdmin}
-                aria-label="Toggle admin mode"
-              />
-            </div>
-          )}
+          <div className="hidden items-center space-x-2 md:flex">
+            <Label htmlFor="admin-mode" className="text-primary-foreground">Modo Admin</Label>
+            <Switch
+              id="admin-mode"
+              checked={isAdmin}
+              onCheckedChange={handleAdminToggle}
+              aria-label="Toggle admin mode"
+            />
+          </div>
           <nav className="hidden md:flex items-center space-x-2">
             {user ? (
-              <Button variant="ghost" size="sm" onClick={logout} className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+              <Button variant="ghost" size="sm" onClick={() => router.push('/login')} className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
                 Sair
               </Button>
             ) : (
@@ -121,9 +126,9 @@ function SiteHeader() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="pr-0">
-                  <SheetHeader className="p-4 pt-6">
-                    <SheetTitle className="sr-only">Menu Principal</SheetTitle>
-                  </SheetHeader>
+                   <SheetHeader className="p-4 pt-6 text-left">
+                     <SheetTitle className="sr-only">Menu Principal</SheetTitle>
+                   </SheetHeader>
                    <Link href="/" className="flex items-center px-4" onClick={() => setIsMobileNavOpen(false)}>
                      <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground mr-2">
                         <Music className="size-5" />
@@ -134,18 +139,18 @@ function SiteHeader() {
                     <div className="flex flex-col space-y-3">
                        <MainNav isMobile={true} />
                        <div className="flex flex-col space-y-2 pt-4 border-t">
+                        <div className="flex items-center space-x-2">
+                            <Label htmlFor="admin-mode-mobile">Modo Admin</Label>
+                            <Switch
+                            id="admin-mode-mobile"
+                            checked={isAdmin}
+                            onCheckedChange={handleAdminToggle}
+                            aria-label="Toggle admin mode"
+                            />
+                        </div>
                         {user ? (
                            <>
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="admin-mode-mobile">Modo Admin</Label>
-                                <Switch
-                                id="admin-mode-mobile"
-                                checked={isAdmin}
-                                onCheckedChange={setIsAdmin}
-                                aria-label="Toggle admin mode"
-                                />
-                            </div>
-                            <Button variant="ghost" onClick={() => { logout(); setIsMobileNavOpen(false);}}>
+                            <Button variant="ghost" onClick={() => { router.push('/login'); setIsMobileNavOpen(false);}}>
                                 <LogOut className="mr-2 h-4 w-4" /> Sair
                             </Button>
                            </>

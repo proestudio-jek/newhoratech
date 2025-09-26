@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useAdmin } from "./AdminContext";
 
 // Mock user type
 type User = {
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { setIsAdmin } = useAdmin();
 
   useEffect(() => {
     // Check for a logged-in user in localStorage
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem("user");
     setUser(null);
+    setIsAdmin(false); // Disable admin mode on logout
     router.push("/login");
   };
 
