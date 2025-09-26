@@ -17,26 +17,27 @@ import {
 import { ArrowRight, Music, Users, Mic } from "lucide-react";
 
 export default function Home() {
-  const carouselImages = [
+  const carouselBanners = [
     {
-      src: "https://picsum.photos/seed/1/1200/600",
-      alt: "Stained glass window in a church",
-      hint: "church stained_glass"
+      title: "Semente da Fé",
+      src: "https://picsum.photos/seed/faith/1200/600",
+      alt: "Banner da Semente da Fé",
+      hint: "faith seeds",
+      href: "/semente-da-fe",
     },
     {
-      src: "https://picsum.photos/seed/2/1200/600",
-      alt: "A choir singing in a church",
-      hint: "gospel choir"
+      title: "Louvores de Sião",
+      src: "https://picsum.photos/seed/zion/1200/600",
+      alt: "Banner de Louvores de Sião",
+      hint: "praise mountain",
+      href: "/louvores-de-siao",
     },
     {
-      src: "https://picsum.photos/seed/3/1200/600",
-      alt: "An open hymnal on a piano",
-      hint: "hymnal piano"
-    },
-    {
-      src: "https://picsum.photos/seed/4/1200/600",
-      alt: "Sunlight streaming through a forest",
-      hint: "sunlight forest"
+      title: "Grande Coral",
+      src: "https://picsum.photos/seed/choir/1200/600",
+      alt: "Banner do Grande Coral",
+      hint: "grand choir",
+      href: "/grande-coral",
     },
   ];
 
@@ -105,20 +106,27 @@ export default function Home() {
           opts={{ loop: true }}
         >
           <CarouselContent>
-            {carouselImages.map((image, index) => (
+            {carouselBanners.map((banner, index) => (
               <CarouselItem key={index}>
-                <Card className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <Image
-                      src={image.src.replace(/seed\/\d+\//, `seed/${index + 1}/`)}
-                      alt={image.alt}
-                      data-ai-hint={image.hint}
-                      width={1200}
-                      height={600}
-                      className="w-full h-auto object-cover aspect-video"
-                    />
-                  </CardContent>
-                </Card>
+                 <Link href={banner.href}>
+                    <Card className="overflow-hidden relative group">
+                    <CardContent className="p-0">
+                        <Image
+                        src={banner.src}
+                        alt={banner.alt}
+                        data-ai-hint={banner.hint}
+                        width={1200}
+                        height={600}
+                        className="w-full h-auto object-cover aspect-video transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex flex-col justify-end p-8">
+                        <h3 className="font-headline text-4xl md:text-5xl font-bold text-white tracking-tight">
+                            {banner.title}
+                        </h3>
+                        </div>
+                    </CardContent>
+                    </Card>
+                 </Link>
               </CarouselItem>
             ))}
           </CarouselContent>
