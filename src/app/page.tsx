@@ -9,30 +9,16 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { ArrowRight, Calendar, Users, Video, Mic, Music2 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { ArrowRight, Users, Mic, Music2 } from "lucide-react";
 
 export default function Home() {
-  const featureSections = [
-    {
-      title: "Calendário de Hinos",
-      description: "Acesse o calendário litúrgico completo e planeje os hinos para cada ocasião especial.",
-      href: "/calendar",
-      icon: Calendar,
-    },
-    {
-      title: "Galeria de Vídeos",
-      description: "Assista a performances, clipes e momentos de adoração em nossa galeria exclusiva.",
-      href: "/videos",
-      icon: Video,
-    },
-    {
-      title: "Comunidades Musicais",
-      description: "Explore e participe de nossas comunidades: Semente da Fé, Louvores de Sião e Grande Coral.",
-      href: "/semente-da-fe",
-      icon: Users,
-    },
-  ];
-
   const communitySections = [
     {
       title: "Semente da Fé",
@@ -40,6 +26,7 @@ export default function Home() {
       href: "/semente-da-fe",
       icon: Music2,
       gradient: "from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50",
+      bannerGradient: "from-blue-500 to-purple-600",
     },
     {
       title: "Louvores de Sião",
@@ -47,6 +34,7 @@ export default function Home() {
       href: "/louvores-de-siao",
       icon: Users,
       gradient: "from-sky-100 to-blue-100 dark:from-sky-900/50 dark:to-blue-900/50",
+      bannerGradient: "from-sky-500 to-blue-600",
     },
     {
       title: "Grande Coral",
@@ -54,94 +42,51 @@ export default function Home() {
       href: "/grande-coral",
       icon: Mic,
       gradient: "from-fuchsia-100 to-pink-100 dark:from-fuchsia-900/50 dark:to-pink-900/50",
+      bannerGradient: "from-fuchsia-500 to-pink-600",
     },
   ];
 
   return (
     <div className="space-y-24 pb-24">
-      {/* Hero Section */}
-      <section className="relative -mt-8 -mx-8">
-        <div className="relative h-[60vh] min-h-[500px] w-full">
-          <Image
-            src="https://picsum.photos/seed/music-hero/1800/1000"
-            alt="Pessoas cantando em um coral"
-            data-ai-hint="gospel choir singing"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/30 to-transparent" />
-        </div>
-        <div className="container absolute bottom-0 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 md:top-auto md:translate-y-0 md:bottom-16">
-           <div className="max-w-2xl text-center md:text-left">
-            <h1 className="font-headline text-5xl md:text-7xl font-black text-primary tracking-tight">
-              Sua jornada musical começa aqui.
-            </h1>
-            <p className="mt-4 text-lg md:text-xl text-foreground/80">
-              PROMUSIC é o seu guia definitivo para hinos, louvores e adoração.
-              Encontre inspiração diária e conecte-se com sua fé através da
-              música.
-            </p>
-            <div className="mt-8 flex gap-4 justify-center md:justify-start">
-              <Link
-                href="/signup"
-                className={buttonVariants({ size: "lg" })}
-              >
-                Começar Agora <ArrowRight />
-              </Link>
-              <Link
-                href="#features"
-                className={buttonVariants({ variant: "outline", size: "lg" })}
-              >
-                Saber Mais
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="container space-y-12">
-        <div className="text-center">
-          <h2 className="font-headline text-4xl font-bold text-primary">
-            Explore a Plataforma
-          </h2>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Tudo o que você precisa para uma experiência de adoração completa.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {featureSections.map((section) => (
-            <Card
-              key={section.href}
-              className="group flex transform flex-col text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
-            >
-              <CardHeader className="items-center">
-                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <section.icon className="size-8" />
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-grow flex-col gap-4">
-                <CardTitle className="text-2xl text-primary">
-                  {section.title}
-                </CardTitle>
-                <CardDescription className="flex-grow text-base text-foreground/70">
-                  {section.description}
-                </CardDescription>
-                <Link
-                  href={section.href}
-                  className={buttonVariants({
-                    variant: "link",
-                    className: "group-hover:text-primary",
-                  })}
-                >
-                  Acessar <ArrowRight className="ml-2 transition-transform group-hover:translate-x-1" />
+      {/* Hero Carousel Section */}
+      <section className="container -mt-8">
+        <Carousel
+          className="w-full"
+          opts={{
+            loop: true,
+          }}
+        >
+          <CarouselContent>
+            {communitySections.map((community, index) => (
+              <CarouselItem key={index}>
+                <Link href={community.href}>
+                  <div className="p-1">
+                    <Card className="overflow-hidden relative group">
+                      <CardContent className="p-0">
+                        <div
+                          className={`relative w-full aspect-video md:aspect-[2.4/1] flex flex-col items-center justify-center p-8 transition-all duration-500 bg-gradient-to-br ${community.bannerGradient} group-hover:opacity-90`}
+                        >
+                          <div className="relative z-10 text-center text-white">
+                            <community.icon className="size-12 md:size-16 mx-auto mb-4" />
+                            <h3 className="font-headline text-4xl md:text-6xl font-bold tracking-tight">
+                              {community.title}
+                            </h3>
+                             <p className="mt-2 text-lg md:text-xl opacity-90 max-w-2xl mx-auto">{community.description}</p>
+                             <div className={buttonVariants({ variant: 'link', className: 'text-white/80 group-hover:text-white mt-4 text-lg'})}>
+                                Acessar <ArrowRight className="ml-2 transition-transform group-hover:translate-x-1" />
+                             </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
+        </Carousel>
       </section>
 
       {/* Communities Section */}
