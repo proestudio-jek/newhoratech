@@ -55,7 +55,7 @@ export default function LoginPage() {
             xmlns="http://www.w3.org/2000/svg"
             width="24"
             height="24"
-            viewBox="0 0 24 24"
+            viewBox="0 0 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -76,7 +76,7 @@ export default function LoginPage() {
            </div>
           <CardTitle className="text-3xl font-headline">Bem-vindo de volta!</CardTitle>
           <CardDescription>
-            Faça login para continuar na Semente da Fé.
+            Faça login para continuar na PROMUSIC.
           </CardDescription>
         </CardHeader>
         <CardContent>

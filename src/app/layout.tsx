@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/app-layout";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Semente da Fé",
+  title: "PROMUSIC",
   description: "Seu guia de hinos e louvores.",
 };
 

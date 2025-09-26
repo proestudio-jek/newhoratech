@@ -83,7 +83,7 @@ export default function SignupPage() {
             </div>
           <CardTitle className="text-3xl font-headline">Crie sua conta</CardTitle>
           <CardDescription>
-            Junte-se à comunidade Semente da Fé.
+            Junte-se à comunidade PROMUSIC.
           </CardDescription>
         </CardHeader>
         <CardContent>

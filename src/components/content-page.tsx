@@ -1,7 +1,9 @@
 "use client";
 
 import { HymnCalendar } from "@/components/hymn-calendar";
-import VideosPage from "@/app/videos/page";
+import { CommunityVideos } from "@/components/community-videos";
+import { CommunityPlaylists } from "@/components/community-playlists";
+import { CommunityNews } from "@/components/community-news";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Video, ListMusic, Newspaper } from "lucide-react";
 
@@ -9,16 +11,6 @@ type ContentPageProps = {
   title: string;
   description: string;
 };
-
-const PlaceholderContent = ({ title }: { title: string }) => (
-    <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
-        <div className="text-center text-muted-foreground">
-            <h2 className="text-2xl font-semibold">Conteúdo de {title}</h2>
-            <p>Esta área será implementada em breve.</p>
-        </div>
-    </div>
-);
-
 
 export function ContentPage({ title, description }: ContentPageProps) {
   return (
@@ -50,23 +42,16 @@ export function ContentPage({ title, description }: ContentPageProps) {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="calendar" className="mt-6">
-           {/* O calendário está sendo reutilizado aqui, mas idealmente teria seus próprios dados */}
           <HymnCalendar />
         </TabsContent>
         <TabsContent value="videos" className="mt-6">
-           {/* A página de vídeos está sendo reutilizada aqui, mas idealmente teria seus próprios dados */}
-           <div className="space-y-6">
-             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-               {/* Conteúdo de vídeo viria aqui */}
-             </div>
-           </div>
-           <PlaceholderContent title="Vídeos" />
+          <CommunityVideos />
         </TabsContent>
         <TabsContent value="playlists" className="mt-6">
-            <PlaceholderContent title="Playlists" />
+          <CommunityPlaylists />
         </TabsContent>
         <TabsContent value="news" className="mt-6">
-            <PlaceholderContent title="Notícias" />
+          <CommunityNews />
         </TabsContent>
       </Tabs>
     </div>

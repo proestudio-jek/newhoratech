@@ -65,7 +65,7 @@ export default function Home() {
     <div className="space-y-12">
       <section className="text-center">
         <h1 className="font-headline text-5xl md:text-7xl font-black text-primary tracking-tight">
-          Bem-vindo à Semente da Fé
+          Bem-vindo à PROMUSIC
         </h1>
         <p className="mt-4 text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto">
           Seu recurso diário para hinos e louvores que inspiram a alma. Explore nosso calendário litúrgico e enriqueça sua adoração.

@@ -77,7 +77,7 @@ function SiteHeader() {
              <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Music className="size-5" />
              </div>
-            <span className="inline-block font-bold font-headline text-primary text-2xl">Semente da Fé</span>
+            <span className="inline-block font-bold font-headline text-primary text-2xl">PROMUSIC</span>
           </Link>
           <MainNav isMobile={false} />
         </div>
@@ -120,7 +120,7 @@ function SiteHeader() {
                      <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground mr-2">
                         <Music className="size-5" />
                      </div>
-                    <span className="font-bold font-headline text-primary text-xl">Semente da Fé</span>
+                    <span className="font-bold font-headline text-primary text-xl">PROMUSIC</span>
                   </Link>
                   <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
                     <div className="flex flex-col space-y-3">
@@ -170,7 +170,7 @@ function SiteFooter() {
       <div className="container py-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2">
           <Music className="h-6 w-6 text-primary" />
-          <span className="font-bold font-headline text-lg text-primary">Semente da Fé</span>
+          <span className="font-bold font-headline text-lg text-primary">PROMUSIC</span>
         </div>
         <nav className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm font-medium">
           <Link href="#" className="text-foreground hover:text-primary transition-colors">
@@ -200,7 +200,7 @@ function SiteFooter() {
       </div>
       <div className="border-t bg-background/50">
         <div className="container py-4 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Semente da Fé. Todos os direitos reservados.
+          © {new Date().getFullYear()} PROMUSIC. Todos os direitos reservados.
         </div>
       </div>
     </footer>
