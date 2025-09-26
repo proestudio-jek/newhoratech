@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
@@ -119,7 +121,10 @@ function SiteHeader() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="pr-0">
-                   <Link href="/" className="flex items-center" onClick={() => setIsMobileNavOpen(false)}>
+                  <SheetHeader className="p-4 pt-6">
+                    <SheetTitle className="sr-only">Menu Principal</SheetTitle>
+                  </SheetHeader>
+                   <Link href="/" className="flex items-center px-4" onClick={() => setIsMobileNavOpen(false)}>
                      <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground mr-2">
                         <Music className="size-5" />
                      </div>
