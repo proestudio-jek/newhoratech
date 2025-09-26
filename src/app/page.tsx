@@ -21,8 +21,9 @@ export default function Home() {
     {
       title: "Semente da Fé",
       href: "/semente-da-fe",
-      icon: Music,
+      icon: Sprout,
       gradient: "from-purple-500 to-indigo-600",
+      imgSrc: "/semente-da-fe-banner.png",
     },
     {
       title: "Louvores de Sião",
@@ -43,7 +44,7 @@ export default function Home() {
       title: "Semente da Fé",
       description: "Hinos, calendários e notícias da Semente da Fé.",
       href: "/semente-da-fe",
-      icon: Music,
+      icon: Sprout,
     },
     {
       title: "Louvores de Sião",
@@ -108,16 +109,26 @@ export default function Home() {
                  <Link href={banner.href}>
                     <Card className="overflow-hidden relative group">
                       <CardContent className="p-0">
-                        <div
-                          className={`relative w-full aspect-video flex flex-col items-center justify-center p-8 transition-all duration-500 bg-gradient-to-br ${banner.gradient} hover:opacity-90`}
-                        >
-                          <div className="relative z-10 text-center text-white">
-                            <h3 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">
-                              {banner.title}
-                            </h3>
-                            <banner.icon className="size-12 mx-auto mt-4" />
+                        {banner.imgSrc ? (
+                           <Image
+                            src={banner.imgSrc}
+                            alt={banner.title}
+                            width={1280}
+                            height={720}
+                            className="aspect-video w-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            className={`relative w-full aspect-video flex flex-col items-center justify-center p-8 transition-all duration-500 bg-gradient-to-br ${banner.gradient} hover:opacity-90`}
+                          >
+                            <div className="relative z-10 text-center text-white">
+                              <h3 className="font-headline text-4xl md:text-5xl font-bold tracking-tight">
+                                {banner.title}
+                              </h3>
+                              <banner.icon className="size-12 mx-auto mt-4" />
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </CardContent>
                     </Card>
                  </Link>
