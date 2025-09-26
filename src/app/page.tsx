@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   Card,
@@ -20,24 +19,18 @@ export default function Home() {
   const carouselBanners = [
     {
       title: "Semente da Fé",
-      src: "https://picsum.photos/seed/faith/1200/600",
-      alt: "Banner da Semente da Fé",
-      hint: "faith seeds",
       href: "/semente-da-fe",
+      gradient: "bg-gradient-to-br from-purple-500 to-indigo-600",
     },
     {
       title: "Louvores de Sião",
-      src: "https://picsum.photos/seed/zion/1200/600",
-      alt: "Banner de Louvores de Sião",
-      hint: "praise mountain",
       href: "/louvores-de-siao",
+      gradient: "bg-gradient-to-br from-pink-500 to-purple-600",
     },
     {
       title: "Grande Coral",
-      src: "https://picsum.photos/seed/choir/1200/600",
-      alt: "Banner do Grande Coral",
-      hint: "grand choir",
       href: "/grande-coral",
+      gradient: "bg-gradient-to-br from-fuchsia-500 to-pink-600",
     },
   ];
 
@@ -110,21 +103,15 @@ export default function Home() {
               <CarouselItem key={index}>
                  <Link href={banner.href}>
                     <Card className="overflow-hidden relative group">
-                    <CardContent className="p-0">
-                        <Image
-                        src={banner.src}
-                        alt={banner.alt}
-                        data-ai-hint={banner.hint}
-                        width={1200}
-                        height={600}
-                        className="w-full h-auto object-cover aspect-video transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex flex-col justify-end p-8">
-                        <h3 className="font-headline text-4xl md:text-5xl font-bold text-white tracking-tight">
+                      <CardContent className="p-0">
+                        <div
+                          className={`w-full aspect-video flex flex-col justify-end p-8 transition-all duration-500 group-hover:brightness-110 ${banner.gradient}`}
+                        >
+                          <h3 className="font-headline text-4xl md:text-5xl font-bold text-white tracking-tight">
                             {banner.title}
-                        </h3>
+                          </h3>
                         </div>
-                    </CardContent>
+                      </CardContent>
                     </Card>
                  </Link>
               </CarouselItem>
