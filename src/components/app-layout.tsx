@@ -37,9 +37,12 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
   const { user, logout } = useAuth();
   const Comp = isMobile ? 'div' : 'nav';
   
+  // Filtered navigation items
+  const filteredNavItems = navItems.filter(item => item.href === "/");
+
   const navLinks = (
     <>
-      {navItems.map((item) => (
+      {filteredNavItems.map((item) => (
         <Button key={item.href} asChild variant={pathname === item.href ? "secondary" : "ghost"}>
           <Link href={item.href}>
             <item.icon className="mr-2 h-4 w-4" />

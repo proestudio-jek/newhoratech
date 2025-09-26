@@ -71,6 +71,33 @@ export default function Home() {
           Seu recurso diário para hinos e louvores que inspiram a alma. Explore nosso calendário litúrgico e enriqueça sua adoração.
         </p>
       </section>
+      
+      <section className="space-y-6">
+          <div className="text-center">
+            <h2 className="font-headline text-4xl font-bold text-primary">Nossas Comunidades</h2>
+            <p className="mt-2 text-lg text-muted-foreground">Explore o conteúdo de cada grupo.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {sections.map((section) => (
+              <Card key={section.href} className="flex flex-col group hover:border-primary transition-colors">
+                <CardHeader className="flex-row items-center gap-4">
+                  <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <section.icon className="size-6" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">{section.title}</CardTitle>
+                    <CardDescription>{section.description}</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow flex items-end justify-end">
+                  <Link href={section.href} className="text-sm font-semibold text-primary inline-flex items-center gap-1 group-hover:underline">
+                    Ver mais <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+      </section>
 
       <section>
         <Carousel 
@@ -98,33 +125,6 @@ export default function Home() {
           <CarouselPrevious className="ml-16" />
           <CarouselNext className="mr-16" />
         </Carousel>
-      </section>
-
-      <section className="space-y-6">
-          <div className="text-center">
-            <h2 className="font-headline text-4xl font-bold text-primary">Nossas Comunidades</h2>
-            <p className="mt-2 text-lg text-muted-foreground">Explore o conteúdo de cada grupo.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {sections.map((section) => (
-              <Card key={section.href} className="flex flex-col group hover:border-primary transition-colors">
-                <CardHeader className="flex-row items-center gap-4">
-                  <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <section.icon className="size-6" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl">{section.title}</CardTitle>
-                    <CardDescription>{section.description}</CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-grow flex items-end justify-end">
-                  <Link href={section.href} className="text-sm font-semibold text-primary inline-flex items-center gap-1 group-hover:underline">
-                    Ver mais <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
       </section>
     </div>
   );
