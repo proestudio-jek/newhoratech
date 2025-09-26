@@ -11,7 +11,8 @@ import {
   signOut,
   type User as FirebaseUser
 } from "firebase/auth";
-import { app } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { app, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
 const auth = getAuth(app);
@@ -89,7 +90,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (email: string, password: string): Promise<void> => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUser = userCredential.user;
+
+      // Save user info to Firestore
+      await setDoc(doc(db, "users", newUser.uid), {
+        email: newUser.email,
+        uid: newUser.uid,
+        createdAt: new Date(),
+      });
+      
       router.push("/");
        toast({
         title: "Conta criada com sucesso!",
