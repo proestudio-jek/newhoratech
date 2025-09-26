@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -22,18 +23,18 @@ export default function Home() {
       title: "Semente da Fé",
       href: "/semente-da-fe",
       imgSrc: "/semente-da-fe-banner.png",
-      iconSrc: "/treble-clef.png",
+      iconSrc: "/semente-da-fe-icon.png",
     },
     {
       title: "Louvores de Sião",
       href: "/louvores-de-siao",
-      iconSrc: "/treble-clef.png",
+      iconSrc: "/louvores-de-siao-icon.png",
       gradient: "from-sky-500 to-blue-600",
     },
     {
       title: "Grande Coral",
       href: "/grande-coral",
-      icon: Mic,
+      iconSrc: "/grande-coral-icon.png",
       gradient: "from-fuchsia-500 to-pink-600",
     },
   ];
@@ -43,21 +44,21 @@ export default function Home() {
       title: "Semente da Fé",
       description: "Hinos, calendários e notícias da Semente da Fé.",
       href: "/semente-da-fe",
-      iconSrc: "/treble-clef.png",
+      iconSrc: "/semente-da-fe-icon.png",
       gradient: "from-blue-100 to-purple-100",
     },
     {
       title: "Louvores de Sião",
       description: "Explore os louvores e eventos de Sião.",
       href: "/louvores-de-siao",
-      iconSrc: "/treble-clef.png",
+      iconSrc: "/louvores-de-siao-icon.png",
       gradient: "from-sky-100 to-blue-100",
     },
     {
       title: "Grande Coral",
       description: "Apresentações e repertório do Grande Coral.",
       href: "/grande-coral",
-      icon: Mic,
+      iconSrc: "/grande-coral-icon.png",
       gradient: "from-fuchsia-100 to-pink-100",
     },
   ];
@@ -83,7 +84,7 @@ export default function Home() {
               <Card key={section.href} className={`flex flex-col group hover:border-primary transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${section.gradient}`}>
                 <CardHeader className="flex-row items-center gap-4">
                   <div className="flex size-12 items-center justify-center rounded-lg bg-white/50 text-primary shadow-inner">
-                    <div className="relative w-6 h-6">
+                    <div className="relative w-8 h-8">
                       {section.icon ? (
                         <section.icon className="size-full" />
                       ) : section.iconSrc ? (
