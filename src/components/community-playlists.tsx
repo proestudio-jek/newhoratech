@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,11 +31,36 @@ const formSchema = z.object({
   title: z.string().min(3, "O nome do hino deve ter pelo menos 3 caracteres."),
 });
 
+const STORAGE_KEY = "community_playlist";
+
 export function CommunityPlaylists() {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
   const { toast } = useToast();
   const [playlist, setPlaylist] = useState<PlaylistItem[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedPlaylist = localStorage.getItem(STORAGE_KEY);
+      if (storedPlaylist) {
+        setPlaylist(JSON.parse(storedPlaylist));
+      }
+    } catch (error) {
+      console.error("Failed to load playlist from localStorage", error);
+    }
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(playlist));
+      } catch (error) {
+        console.error("Failed to save playlist to localStorage", error);
+      }
+    }
+  }, [playlist, isMounted]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -66,6 +91,10 @@ export function CommunityPlaylists() {
     })
   }
 
+  if (!isMounted) {
+    return null; // or a loading skeleton
+  }
+
   return (
     <div className="space-y-6">
       {user && isAdmin && (
@@ -78,12 +107,12 @@ export function CommunityPlaylists() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row items-end gap-4">
                 <FormField
                   control={form.control}
                   name="title"
                   render={({ field }) => (
-                    <FormItem className="flex-grow">
+                    <FormItem className="flex-grow w-full">
                       <FormLabel>Nome do Hino</FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Quão Grande És Tu" {...field} />
@@ -92,7 +121,7 @@ export function CommunityPlaylists() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   <PlusCircle className="mr-2" /> Adicionar Hino
                 </Button>
               </form>
@@ -139,6 +168,7 @@ export function CommunityPlaylists() {
       ) : (
         <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
             <div className="text-center text-muted-foreground">
+                <ListMusic className="mx-auto h-12 w-12 mb-4"/>
                 <h2 className="text-2xl font-semibold">Playlist Vazia</h2>
                 <p>O administrador ainda não adicionou hinos a esta playlist.</p>
             </div>

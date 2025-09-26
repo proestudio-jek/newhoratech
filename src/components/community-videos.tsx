@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,11 +37,36 @@ function getYoutubeId(url: string) {
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
+const STORAGE_KEY = "community_videos";
+
 export function CommunityVideos() {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
   const { toast } = useToast();
   const [videos, setVideos] = useState<CommunityVideo[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedVideos = localStorage.getItem(STORAGE_KEY);
+      if (storedVideos) {
+        setVideos(JSON.parse(storedVideos));
+      }
+    } catch (error) {
+      console.error("Failed to load videos from localStorage", error);
+    }
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(videos));
+      } catch (error) {
+        console.error("Failed to save videos to localStorage", error);
+      }
+    }
+  }, [videos, isMounted]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -83,6 +108,10 @@ export function CommunityVideos() {
     })
   }
 
+  if (!isMounted) {
+    return null; // or a loading skeleton
+  }
+
   return (
     <div className="space-y-6">
       {user && isAdmin && (
@@ -96,12 +125,12 @@ export function CommunityVideos() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-end gap-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row items-end gap-4">
                 <FormField
                   control={form.control}
                   name="videoUrl"
                   render={({ field }) => (
-                    <FormItem className="flex-grow">
+                    <FormItem className="flex-grow w-full">
                       <FormLabel>URL do YouTube</FormLabel>
                       <FormControl>
                         <Input placeholder="https://www.youtube.com/watch?v=..." {...field} />
@@ -110,7 +139,7 @@ export function CommunityVideos() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   <PlusCircle className="mr-2" /> Adicionar Vídeo
                 </Button>
               </form>
@@ -153,6 +182,7 @@ export function CommunityVideos() {
       ) : (
         <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
             <div className="text-center text-muted-foreground">
+                <Youtube className="mx-auto h-12 w-12 mb-4"/>
                 <h2 className="text-2xl font-semibold">Nenhum Vídeo Adicionado</h2>
                 <p>O administrador ainda não adicionou vídeos a esta seção.</p>
             </div>

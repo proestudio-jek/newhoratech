@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,12 +36,37 @@ const formSchema = z.object({
   content: z.string().min(10, "A notícia deve ter pelo menos 10 caracteres."),
 });
 
+const STORAGE_KEY = "community_news";
+
 export function CommunityNews() {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
   const { toast } = useToast();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedArticles = localStorage.getItem(STORAGE_KEY);
+      if (storedArticles) {
+        setArticles(JSON.parse(storedArticles));
+      }
+    } catch (error) {
+      console.error("Failed to load news from localStorage", error);
+    }
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
+      } catch (error) {
+        console.error("Failed to save news to localStorage", error);
+      }
+    }
+  }, [articles, isMounted]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -74,6 +99,10 @@ export function CommunityNews() {
         title: "Notícia Removida",
         description: "O artigo foi removido."
     })
+  }
+
+  if (!isMounted) {
+    return null; // or a loading skeleton
   }
 
   return (
