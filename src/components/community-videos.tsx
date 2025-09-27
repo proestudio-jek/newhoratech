@@ -23,12 +23,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Trash2, Youtube } from "lucide-react";
+import { PlusCircle, Trash2, Youtube, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CommunityVideo } from "@/lib/types";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 
 const formSchema = z.object({
   videoUrl: z.string().url("Por favor, insira uma URL válida do YouTube."),
+  title: z.string().min(3, "O título deve ter pelo menos 3 caracteres."),
 });
 
 function getYoutubeId(url: string) {
@@ -37,45 +40,54 @@ function getYoutubeId(url: string) {
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
-const STORAGE_KEY = "community_videos";
-
 export function CommunityVideos() {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
   const { toast } = useToast();
   const [videos, setVideos] = useState<CommunityVideo[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedVideos = localStorage.getItem(STORAGE_KEY);
-      if (storedVideos) {
-        setVideos(JSON.parse(storedVideos));
-      }
-    } catch (error) {
-      console.error("Failed to load videos from localStorage", error);
-    }
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isMounted) {
+    const fetchVideos = async () => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(videos));
+        const videosCollection = collection(db, "community-videos");
+        const q = query(videosCollection, orderBy("createdAt", "desc"));
+        const videosSnapshot = await getDocs(q);
+        const videosList = videosSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                youtubeId: data.youtubeId,
+                title: data.title,
+            }
+        });
+        setVideos(videosList);
       } catch (error) {
-        console.error("Failed to save videos to localStorage", error);
+        console.error("Failed to load videos from Firestore", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao Carregar Vídeos",
+          description: "Não foi possível buscar os vídeos do banco de dados.",
+        });
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, [videos, isMounted]);
+    };
+    fetchVideos();
+  }, [toast]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       videoUrl: "",
+      title: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if(!user) return;
+
     const youtubeId = getYoutubeId(values.videoUrl);
     if (!youtubeId) {
       toast({
@@ -86,30 +98,64 @@ export function CommunityVideos() {
       return;
     }
 
-    const newVideo: CommunityVideo = {
-      id: new Date().getTime().toString(),
+    const newVideoData = {
       youtubeId: youtubeId,
-      title: `Vídeo ${videos.length + 1}`, // Placeholder title
+      title: values.title,
+      createdAt: new Date(),
+      addedBy: user.uid,
     };
 
-    setVideos((prev) => [...prev, newVideo]);
-    form.reset();
-    toast({
-        title: "Vídeo Adicionado!",
-        description: "O vídeo do YouTube foi adicionado à galeria.",
-    });
+    try {
+      const docRef = await addDoc(collection(db, "community-videos"), newVideoData);
+      const newVideo: CommunityVideo = {
+        id: docRef.id,
+        youtubeId: newVideoData.youtubeId,
+        title: newVideoData.title,
+      };
+
+      setVideos((prev) => [newVideo, ...prev]);
+      form.reset();
+      toast({
+          title: "Vídeo Adicionado!",
+          description: "O vídeo do YouTube foi adicionado à galeria.",
+      });
+    } catch (error) {
+        console.error("Error adding video: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Adicionar",
+            description: "Não foi possível adicionar o vídeo.",
+        });
+    }
   }
 
-  const handleRemoveVideo = (id: string) => {
-    setVideos(videos.filter(v => v.id !== id));
-    toast({
-        title: "Vídeo Removido",
-        description: "O vídeo foi removido da galeria."
-    })
+  const handleRemoveVideo = async (id: string) => {
+    try {
+        await deleteDoc(doc(db, "community-videos", id));
+        setVideos(videos.filter(v => v.id !== id));
+        toast({
+            title: "Vídeo Removido",
+            description: "O vídeo foi removido da galeria."
+        })
+    } catch(error) {
+        console.error("Error removing video: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Remover",
+            description: "Não foi possível remover o vídeo.",
+        });
+    }
   }
 
-  if (!isMounted) {
-    return null; // or a loading skeleton
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
+            <div className="text-center text-muted-foreground">
+                <Loader2 className="mx-auto h-12 w-12 animate-spin mb-4"/>
+                <h2 className="text-2xl font-semibold">Carregando Vídeos...</h2>
+            </div>
+        </div>
+    );
   }
 
   return (
@@ -125,12 +171,25 @@ export function CommunityVideos() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row items-end gap-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                 <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Título do Vídeo</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Coro Magnificat em Performance" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="videoUrl"
                   render={({ field }) => (
-                    <FormItem className="flex-grow w-full">
+                    <FormItem>
                       <FormLabel>URL do YouTube</FormLabel>
                       <FormControl>
                         <Input placeholder="https://www.youtube.com/watch?v=..." {...field} />
@@ -139,9 +198,11 @@ export function CommunityVideos() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full sm:w-auto">
-                  <PlusCircle className="mr-2" /> Adicionar Vídeo
-                </Button>
+                <div className="flex justify-end">
+                    <Button type="submit">
+                        <PlusCircle className="mr-2" /> Adicionar Vídeo
+                    </Button>
+                </div>
               </form>
             </Form>
           </CardContent>
@@ -163,7 +224,7 @@ export function CommunityVideos() {
                 ></iframe>
               </div>
               <CardContent className="p-4">
-                 <h3 className="font-semibold text-lg flex items-center gap-2"> <Youtube className="text-red-500"/> {video.title}</h3>
+                 <h3 className="font-semibold text-lg flex items-center gap-2 truncate"> <Youtube className="text-red-500 flex-shrink-0"/> {video.title}</h3>
               </CardContent>
               {user && isAdmin && (
                 <Button

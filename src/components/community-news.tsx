@@ -15,7 +15,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
 } from "@/components/ui/card";
 import {
   Form,
@@ -27,16 +26,17 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2, Newspaper } from "lucide-react";
+import { PlusCircle, Trash2, Newspaper, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { NewsArticle } from "@/lib/types";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp } from "firebase/firestore";
+
 
 const formSchema = z.object({
   title: z.string().min(5, "O título deve ter pelo menos 5 caracteres."),
   content: z.string().min(10, "A notícia deve ter pelo menos 10 caracteres."),
 });
-
-const STORAGE_KEY = "community_news";
 
 export function CommunityNews() {
   const { user } = useAuth();
@@ -44,29 +44,39 @@ export function CommunityNews() {
   const { toast } = useToast();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedArticles = localStorage.getItem(STORAGE_KEY);
-      if (storedArticles) {
-        setArticles(JSON.parse(storedArticles));
-      }
-    } catch (error) {
-      console.error("Failed to load news from localStorage", error);
-    }
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isMounted) {
+    const fetchArticles = async () => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
+        const articlesCollection = collection(db, "community-news");
+        const q = query(articlesCollection, orderBy("date", "desc"));
+        const articlesSnapshot = await getDocs(q);
+        const articlesList = articlesSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return { 
+            id: doc.id, 
+            title: data.title,
+            content: data.content,
+            date: (data.date as Timestamp).toDate().toISOString() 
+          };
+        });
+        setArticles(articlesList);
       } catch (error) {
-        console.error("Failed to save news to localStorage", error);
+        console.error("Failed to load news from Firestore", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao Carregar Notícias",
+          description: "Não foi possível carregar as notícias do banco de dados.",
+        });
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, [articles, isMounted]);
+    };
+
+    fetchArticles();
+  }, [toast]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,33 +86,69 @@ export function CommunityNews() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newArticle: NewsArticle = {
-      id: new Date().getTime().toString(),
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) return;
+
+    const newArticleData = {
       title: values.title,
       content: values.content,
-      date: new Date().toISOString(),
+      date: new Date(),
+      authorId: user.uid,
     };
 
-    setArticles((prev) => [newArticle, ...prev]);
-    form.reset();
-    setIsAdding(false);
-    toast({
-        title: "Notícia Publicada!",
-        description: `O artigo "${values.title}" foi publicado.`,
-    });
+    try {
+      const docRef = await addDoc(collection(db, "community-news"), newArticleData);
+      const newArticle: NewsArticle = {
+        id: docRef.id,
+        title: newArticleData.title,
+        content: newArticleData.content,
+        date: newArticleData.date.toISOString(),
+      }
+      setArticles((prev) => [newArticle, ...prev]);
+      form.reset();
+      setIsAdding(false);
+      toast({
+          title: "Notícia Publicada!",
+          description: `O artigo "${values.title}" foi publicado.`,
+      });
+    } catch(error) {
+       console.error("Error adding document: ", error);
+       toast({
+        variant: "destructive",
+        title: "Erro ao Publicar",
+        description: "Não foi possível salvar a notícia.",
+      });
+    }
   }
   
-  const handleRemoveArticle = (id: string) => {
-    setArticles(articles.filter(item => item.id !== id));
-    toast({
-        title: "Notícia Removida",
-        description: "O artigo foi removido."
-    })
+  const handleRemoveArticle = async (id: string) => {
+    try {
+        await deleteDoc(doc(db, "community-news", id));
+        setArticles(articles.filter(item => item.id !== id));
+        toast({
+            title: "Notícia Removida",
+            description: "O artigo foi removido."
+        })
+    } catch (error) {
+        console.error("Error removing document: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Remover",
+            description: "Não foi possível remover a notícia."
+        });
+    }
   }
 
-  if (!isMounted) {
-    return null; // or a loading skeleton
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
+            <div className="text-center text-muted-foreground">
+                <Loader2 className="mx-auto h-12 w-12 animate-spin mb-4"/>
+                <h2 className="text-2xl font-semibold">Carregando Notícias...</h2>
+                <p>Buscando as últimas novidades no banco de dados.</p>
+            </div>
+        </div>
+    )
   }
 
   return (

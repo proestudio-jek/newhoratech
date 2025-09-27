@@ -23,44 +23,49 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Trash2, ListMusic } from "lucide-react";
+import { PlusCircle, Trash2, ListMusic, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PlaylistItem } from "@/lib/types";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 
 const formSchema = z.object({
   title: z.string().min(3, "O nome do hino deve ter pelo menos 3 caracteres."),
 });
 
-const STORAGE_KEY = "community_playlist";
 
 export function CommunityPlaylists() {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
   const { toast } = useToast();
   const [playlist, setPlaylist] = useState<PlaylistItem[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedPlaylist = localStorage.getItem(STORAGE_KEY);
-      if (storedPlaylist) {
-        setPlaylist(JSON.parse(storedPlaylist));
-      }
-    } catch (error) {
-      console.error("Failed to load playlist from localStorage", error);
-    }
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (isMounted) {
+    const fetchPlaylist = async () => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(playlist));
+        const playlistCollection = collection(db, "community-playlist");
+        const q = query(playlistCollection, orderBy("createdAt", "asc"));
+        const playlistSnapshot = await getDocs(q);
+        const playlistItems = playlistSnapshot.docs.map(doc => ({
+            id: doc.id,
+            title: doc.data().title
+        }));
+        setPlaylist(playlistItems);
       } catch (error) {
-        console.error("Failed to save playlist to localStorage", error);
+        console.error("Failed to load playlist from Firestore", error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao Carregar Playlist",
+          description: "Não foi possível buscar a playlist do banco de dados.",
+        });
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, [playlist, isMounted]);
+    };
+
+    fetchPlaylist();
+  }, [toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,30 +74,64 @@ export function CommunityPlaylists() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const newHymn: PlaylistItem = {
-      id: new Date().getTime().toString(),
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) return;
+    
+    const newHymnData = {
       title: values.title,
+      createdAt: new Date(),
     };
 
-    setPlaylist((prev) => [...prev, newHymn]);
-    form.reset();
-    toast({
-        title: "Hino Adicionado!",
-        description: `"${values.title}" foi adicionado à playlist.`,
-    });
+    try {
+        const docRef = await addDoc(collection(db, "community-playlist"), newHymnData);
+        const newHymn: PlaylistItem = {
+          id: docRef.id,
+          title: values.title,
+        };
+
+        setPlaylist((prev) => [...prev, newHymn]);
+        form.reset();
+        toast({
+            title: "Hino Adicionado!",
+            description: `"${values.title}" foi adicionado à playlist.`,
+        });
+    } catch(error) {
+        console.error("Error adding hymn: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Adicionar",
+            description: "Não foi possível adicionar o hino à playlist.",
+        });
+    }
   }
 
-  const handleRemoveHymn = (id: string) => {
-    setPlaylist(playlist.filter(item => item.id !== id));
-    toast({
-        title: "Hino Removido",
-        description: "O hino foi removido da playlist."
-    })
+  const handleRemoveHymn = async (id: string) => {
+    try {
+        await deleteDoc(doc(db, "community-playlist", id));
+        setPlaylist(playlist.filter(item => item.id !== id));
+        toast({
+            title: "Hino Removido",
+            description: "O hino foi removido da playlist."
+        })
+    } catch(error) {
+        console.error("Error removing hymn: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao Remover",
+            description: "Não foi possível remover o hino.",
+        })
+    }
   }
 
-  if (!isMounted) {
-    return null; // or a loading skeleton
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
+            <div className="text-center text-muted-foreground">
+                <Loader2 className="mx-auto h-12 w-12 animate-spin mb-4"/>
+                <h2 className="text-2xl font-semibold">Carregando Playlist...</h2>
+            </div>
+        </div>
+    );
   }
 
   return (
