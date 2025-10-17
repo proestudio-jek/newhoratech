@@ -49,6 +49,7 @@ export function CommunityNews() {
 
   useEffect(() => {
     const fetchArticles = async () => {
+      if (!db) return;
       try {
         const articlesCollection = collection(db, "community-news");
         const q = query(articlesCollection, orderBy("date", "desc"));
@@ -88,7 +89,7 @@ export function CommunityNews() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) return;
+    if (!user || !db) return;
 
     const newArticleData = {
       title: values.title,
@@ -123,6 +124,7 @@ export function CommunityNews() {
   }
   
   const handleRemoveArticle = async (id: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "community-news", id));
         setArticles(articles.filter(item => item.id !== id));

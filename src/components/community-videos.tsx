@@ -50,6 +50,7 @@ export function CommunityVideos() {
 
   useEffect(() => {
     const fetchVideos = async () => {
+      if (!db) return;
       try {
         const videosCollection = collection(db, "community-videos");
         const q = query(videosCollection, orderBy("createdAt", "desc"));
@@ -87,7 +88,7 @@ export function CommunityVideos() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if(!user) return;
+    if(!user || !db) return;
 
     const youtubeId = getYoutubeId(values.videoUrl);
     if (!youtubeId) {
@@ -131,6 +132,7 @@ export function CommunityVideos() {
   }
 
   const handleRemoveVideo = async (id: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "community-videos", id));
         setVideos(videos.filter(v => v.id !== id));
