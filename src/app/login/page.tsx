@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Music, Loader2 } from "lucide-react";
-import { useState } from "react";
 
 const formSchema = z.object({
   email: z.string().email("Por favor, insira um email válido."),
@@ -32,8 +31,7 @@ const formSchema = z.object({
 });
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, loading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,13 +42,7 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    try {
-      await login(values.email, values.password);
-    } catch(error) {
-      // Error is handled in the AuthContext, but we stop loading here
-      setIsLoading(false);
-    }
+    await login(values.email, values.password);
   }
 
   return (
@@ -116,8 +108,8 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Entrar
               </Button>
             </form>

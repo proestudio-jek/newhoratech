@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Music, Loader2 } from "lucide-react";
-import { useState } from "react";
 
 const formSchema = z
   .object({
@@ -38,8 +37,7 @@ const formSchema = z
   });
 
 export default function SignupPage() {
-  const { signup } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { signup, loading } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,13 +49,7 @@ export default function SignupPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    try {
-      await signup(values.email, values.password);
-    } catch(error) {
-      // Error is handled by the AuthContext, stop loading
-      setIsLoading(false);
-    }
+    await signup(values.email, values.password);
   }
 
   return (
@@ -136,8 +128,8 @@ export default function SignupPage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Criar Conta
               </Button>
             </form>
