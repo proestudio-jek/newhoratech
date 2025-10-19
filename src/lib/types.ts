@@ -8,11 +8,13 @@ export type CommunityVideo = {
   id: string;
   youtubeId: string;
   title: string;
+  createdAt: string;
 };
 
 export type PlaylistItem = {
     id: string;
     title: string;
+    createdAt: string;
 };
 
 export type NewsArticle = {

@@ -104,7 +104,7 @@ export function CommunityNews() {
         content: newArticleData.content,
         date: newArticleData.date.toISOString(),
       }
-      setArticles((prev) => [newArticle, ...prev]);
+      setArticles((prev) => [newArticle, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       form.reset();
       setIsAdding(false);
       toast({
@@ -242,7 +242,7 @@ export function CommunityNews() {
             <div className="text-center text-muted-foreground">
                 <Newspaper className="mx-auto h-12 w-12 mb-4"/>
                 <h2 className="text-2xl font-semibold">Nenhuma Notícia Publicada</h2>
-                <p>O administrador ainda não publicou notícias nesta seção.</p>
+                {isAdmin ? <p>Adicione a primeira notícia no botão acima.</p> : <p>O administrador ainda não publicou notícias nesta seção.</p>}
             </div>
         </div>
       )}

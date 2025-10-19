@@ -12,8 +12,10 @@ import {
   type AuthError
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { useFirebase } from "./firebase-provider"; // Importar o hook do novo provider
+import type { Firestore } from "firebase/firestore";
+import type { Auth } from "firebase/auth";
 
 type User = {
   uid: string;
@@ -29,7 +31,8 @@ type AuthContextType = {
   signup: (email: string, pass: string) => Promise<void>;
   loading: boolean;
   initialLoading: boolean;
-  db: typeof db | null;
+  auth: Auth;
+  db: Firestore;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,6 +54,7 @@ const getFriendlyAuthErrorMessage = (errorCode: string) => {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { app, auth, db } = useFirebase(); // Obter instâncias do FirebaseProvider
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -74,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, [auth, router, pathname]);
 
   const handleAuthError = (error: AuthError) => {
     console.error(`Firebase Auth Error (${error.code}):`, error.message);
@@ -155,11 +159,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     loading,
     initialLoading,
-    db
+    auth,
+    db,
   };
 
   if(initialLoading) {
-    return null;
+    return null; // ou um componente de loading global
   }
 
   return (

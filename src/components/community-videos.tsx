@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, Youtube, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CommunityVideo } from "@/lib/types";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp } from "firebase/firestore";
 
 const formSchema = z.object({
   videoUrl: z.string().url("Por favor, insira uma URL válida do YouTube."),
@@ -58,6 +58,7 @@ export function CommunityVideos() {
                 id: doc.id,
                 youtubeId: data.youtubeId,
                 title: data.title,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString()
             }
         });
         setVideos(videosList);
@@ -110,6 +111,7 @@ export function CommunityVideos() {
         id: docRef.id,
         youtubeId: newVideoData.youtubeId,
         title: newVideoData.title,
+        createdAt: newVideoData.createdAt.toISOString()
       };
 
       setVideos((prev) => [newVideo, ...prev]);
@@ -245,7 +247,7 @@ export function CommunityVideos() {
             <div className="text-center text-muted-foreground">
                 <Youtube className="mx-auto h-12 w-12 mb-4"/>
                 <h2 className="text-2xl font-semibold">Nenhum Vídeo Adicionado</h2>
-                <p>O administrador ainda não adicionou vídeos a esta seção.</p>
+                {isAdmin ? <p>Adicione o primeiro vídeo no formulário acima.</p> : <p>O administrador ainda não adicionou vídeos a esta seção.</p>}
             </div>
         </div>
       )}

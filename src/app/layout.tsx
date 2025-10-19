@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/app-layout";
 import { Toaster } from "@/components/ui/toaster";
+import { FirebaseProvider } from "@/contexts/firebase-provider";
 
 export const metadata: Metadata = {
   title: "PROMUSIC",
@@ -35,10 +36,12 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          <AppLayout>{children}</AppLayout>
-          <Toaster />
-        </AuthProvider>
+        <FirebaseProvider>
+          <AuthProvider>
+            <AppLayout>{children}</AppLayout>
+            <Toaster />
+          </AuthProvider>
+        </FirebaseProvider>
       </body>
     </html>
   );

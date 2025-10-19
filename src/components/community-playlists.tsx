@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, ListMusic, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PlaylistItem } from "@/lib/types";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp } from "firebase/firestore";
 
 const formSchema = z.object({
   title: z.string().min(3, "O nome do hino deve ter pelo menos 3 caracteres."),
@@ -47,10 +47,14 @@ export function CommunityPlaylists() {
         const playlistCollection = collection(db, "community-playlist");
         const q = query(playlistCollection, orderBy("createdAt", "asc"));
         const playlistSnapshot = await getDocs(q);
-        const playlistItems = playlistSnapshot.docs.map(doc => ({
-            id: doc.id,
-            title: doc.data().title
-        }));
+        const playlistItems = playlistSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                title: data.title,
+                createdAt: (data.createdAt as Timestamp).toDate().toISOString()
+            }
+        });
         setPlaylist(playlistItems);
       } catch (error) {
         console.error("Failed to load playlist from Firestore", error);
@@ -87,6 +91,7 @@ export function CommunityPlaylists() {
         const newHymn: PlaylistItem = {
           id: docRef.id,
           title: values.title,
+          createdAt: newHymnData.createdAt.toISOString()
         };
 
         setPlaylist((prev) => [...prev, newHymn]);
@@ -210,7 +215,7 @@ export function CommunityPlaylists() {
             <div className="text-center text-muted-foreground">
                 <ListMusic className="mx-auto h-12 w-12 mb-4"/>
                 <h2 className="text-2xl font-semibold">Playlist Vazia</h2>
-                <p>O administrador ainda não adicionou hinos a esta playlist.</p>
+                {isAdmin ? <p>Adicione o primeiro hino no formulário acima.</p> : <p>O administrador ainda não adicionou hinos a esta playlist.</p>}
             </div>
         </div>
       )}
