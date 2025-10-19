@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -6,7 +7,6 @@ import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAdmin } from "@/contexts/AdminContext";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Hymn } from "@/lib/types";
 import { Music, PlusCircle, Trash2, CalendarHeart } from "lucide-react";
@@ -28,8 +28,7 @@ export function HymnCalendar() {
   const [hymns, setHymns] = useState<Record<string, Hymn[]>>(initialHymns);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { isAdmin } = useAdmin();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const selectedDateStr = date ? format(date, "yyyy-MM-dd") : "";
   const selectedHymns = hymns[selectedDateStr] || [];

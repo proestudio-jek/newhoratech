@@ -5,9 +5,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAdmin } from "@/contexts/AdminContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFirebase } from "@/contexts/FirebaseContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,9 +34,7 @@ const formSchema = z.object({
 
 
 export function CommunityPlaylists() {
-  const { user } = useAuth();
-  const { isAdmin } = useAdmin();
-  const { db } = useFirebase();
+  const { user, isAdmin, db } = useAuth();
   const { toast } = useToast();
   const [playlist, setPlaylist] = useState<PlaylistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);

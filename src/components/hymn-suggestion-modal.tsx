@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -31,7 +32,6 @@ import { Sparkles, Loader2, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Hymn } from "@/lib/types";
 import { suggestHymnsForDate } from "@/ai/flows/suggest-hymns-for-date";
-import { useAdmin } from "@/contexts/AdminContext";
 import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
@@ -54,8 +54,7 @@ export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd }: HymnSu
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { user, isAdmin } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

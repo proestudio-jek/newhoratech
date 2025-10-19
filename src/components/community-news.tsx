@@ -7,9 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useAdmin } from "@/contexts/AdminContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFirebase } from "@/contexts/FirebaseContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,9 +38,7 @@ const formSchema = z.object({
 });
 
 export function CommunityNews() {
-  const { user } = useAuth();
-  const { isAdmin } = useAdmin();
-  const { db } = useFirebase();
+  const { user, isAdmin, db } = useAuth();
   const { toast } = useToast();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isAdding, setIsAdding] = useState(false);

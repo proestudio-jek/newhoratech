@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useAdmin } from "@/contexts/AdminContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   CalendarDays,
@@ -124,8 +123,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
 }
 
 function SiteHeader() {
-  const { isAdmin, setIsAdmin } = useAdmin();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin, setIsAdmin } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);

@@ -12,7 +12,7 @@ import {
   type AuthError
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { useFirebase } from "@/contexts/FirebaseContext";
+import { auth, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
 type User = {
@@ -22,11 +22,14 @@ type User = {
 
 type AuthContextType = {
   user: User | null;
+  isAdmin: boolean;
+  setIsAdmin: (isAdmin: boolean) => void;
   login: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   signup: (email: string, pass: string) => Promise<void>;
   loading: boolean;
   initialLoading: boolean;
+  db: typeof db | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,8 +51,8 @@ const getFriendlyAuthErrorMessage = (errorCode: string) => {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { auth, db } = useFirebase();
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const router = useRouter();
@@ -57,19 +60,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!auth) return;
-
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       setUser(firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null);
       setInitialLoading(false);
       
+      if (!firebaseUser) {
+        setIsAdmin(false);
+      }
+
       if(firebaseUser && (pathname === '/login' || pathname === '/signup')) {
           router.replace('/');
       }
     });
 
     return () => unsubscribe();
-  }, [auth, router, pathname]);
+  }, [router, pathname]);
 
   const handleAuthError = (error: AuthError) => {
     console.error(`Firebase Auth Error (${error.code}):`, error.message);
@@ -81,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (email: string, password: string):Promise<void> => {
-    if (!auth) return;
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -98,7 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    if (!auth) return;
     setLoading(true);
     try {
       await signOut(auth);
@@ -120,13 +123,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (email: string, password: string): Promise<void> => {
-    if (!auth || !db) return;
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
 
-      // Save user info to Firestore
       await setDoc(doc(db, "users", newUser.uid), {
         email: newUser.email,
         uid: newUser.uid,
@@ -147,15 +148,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = {
     user,
+    isAdmin,
+    setIsAdmin,
     login,
     logout,
     signup,
     loading,
-    initialLoading
+    initialLoading,
+    db
   };
 
   if(initialLoading) {
-    return null; // Ou um spinner/loader global
+    return null;
   }
 
   return (
