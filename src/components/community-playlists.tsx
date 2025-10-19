@@ -44,7 +44,6 @@ export function CommunityPlaylists() {
 
   useEffect(() => {
     const fetchPlaylist = async () => {
-      if (!db) return;
       try {
         const playlistCollection = collection(db, "community-playlist");
         const q = query(playlistCollection, orderBy("createdAt", "asc"));
@@ -77,7 +76,7 @@ export function CommunityPlaylists() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !db) return;
+    if (!user) return;
     
     const newHymnData = {
       title: values.title,
@@ -108,7 +107,6 @@ export function CommunityPlaylists() {
   }
 
   const handleRemoveHymn = async (id: string) => {
-    if (!db) return;
     try {
         await deleteDoc(doc(db, "community-playlist", id));
         setPlaylist(playlist.filter(item => item.id !== id));
