@@ -12,7 +12,7 @@ import {
   type AuthError
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { useFirebase } from "@/contexts/FirebaseContext";
 import { useToast } from "@/hooks/use-toast";
 
 type User = {
@@ -48,6 +48,7 @@ const getFriendlyAuthErrorMessage = (errorCode: string) => {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { auth, db } = useFirebase();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -56,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!auth) return;
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       setUser(firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null);
       setInitialLoading(false);
@@ -66,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, [auth, router, pathname]);
 
   const handleAuthError = (error: AuthError) => {
     console.error(`Firebase Auth Error (${error.code}):`, error.message);
@@ -78,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (email: string, password: string):Promise<void> => {
+    if (!auth) return;
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -94,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    if (!auth) return;
     setLoading(true);
     try {
       await signOut(auth);
@@ -115,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (email: string, password: string): Promise<void> => {
+    if (!auth || !db) return;
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -148,9 +154,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initialLoading
   };
 
+  if(initialLoading) {
+    return null; // Ou um spinner/loader global
+  }
+
   return (
     <AuthContext.Provider value={value}>
-      {initialLoading ? null : children}
+      {children}
     </AuthContext.Provider>
   );
 }

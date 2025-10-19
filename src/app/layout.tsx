@@ -1,10 +1,12 @@
 
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { AppLayout } from "@/components/app-layout";
 import { Toaster } from "@/components/ui/toaster";
+import { FirebaseProvider } from "@/contexts/FirebaseContext";
 
 export const metadata: Metadata = {
   title: "PROMUSIC",
@@ -35,12 +37,14 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          <AdminProvider>
-            <AppLayout>{children}</AppLayout>
-            <Toaster />
-          </AdminProvider>
-        </AuthProvider>
+        <FirebaseProvider>
+          <AuthProvider>
+            <AdminProvider>
+              <AppLayout>{children}</AppLayout>
+              <Toaster />
+            </AdminProvider>
+          </AuthProvider>
+        </FirebaseProvider>
       </body>
     </html>
   );

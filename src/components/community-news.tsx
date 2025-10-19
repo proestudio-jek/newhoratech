@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFirebase } from "@/contexts/FirebaseContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,7 +31,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, Newspaper, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { NewsArticle } from "@/lib/types";
-import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp } from "firebase/firestore";
 
 
@@ -42,12 +42,15 @@ const formSchema = z.object({
 export function CommunityNews() {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
+  const { db } = useFirebase();
   const { toast } = useToast();
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!db) return;
+    
     const fetchArticles = async () => {
       try {
         const articlesCollection = collection(db, "community-news");
@@ -76,7 +79,7 @@ export function CommunityNews() {
     };
 
     fetchArticles();
-  }, [toast]);
+  }, [db, toast]);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -88,7 +91,7 @@ export function CommunityNews() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) return;
+    if (!user || !db) return;
 
     const newArticleData = {
       title: values.title,
@@ -123,6 +126,7 @@ export function CommunityNews() {
   }
   
   const handleRemoveArticle = async (id: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "community-news", id));
         setArticles(articles.filter(item => item.id !== id));

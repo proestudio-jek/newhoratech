@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFirebase } from "@/contexts/FirebaseContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,7 +28,6 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, ListMusic, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PlaylistItem } from "@/lib/types";
-import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 
 const formSchema = z.object({
@@ -38,11 +38,14 @@ const formSchema = z.object({
 export function CommunityPlaylists() {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
+  const { db } = useFirebase();
   const { toast } = useToast();
   const [playlist, setPlaylist] = useState<PlaylistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!db) return;
+
     const fetchPlaylist = async () => {
       try {
         const playlistCollection = collection(db, "community-playlist");
@@ -66,7 +69,7 @@ export function CommunityPlaylists() {
     };
 
     fetchPlaylist();
-  }, [toast]);
+  }, [db, toast]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,7 +79,7 @@ export function CommunityPlaylists() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) return;
+    if (!user || !db) return;
     
     const newHymnData = {
       title: values.title,
@@ -107,6 +110,7 @@ export function CommunityPlaylists() {
   }
 
   const handleRemoveHymn = async (id: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "community-playlist", id));
         setPlaylist(playlist.filter(item => item.id !== id));

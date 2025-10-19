@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFirebase } from "@/contexts/FirebaseContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,7 +28,6 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, Youtube, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CommunityVideo } from "@/lib/types";
-import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 
 const formSchema = z.object({
@@ -44,11 +44,13 @@ function getYoutubeId(url: string) {
 export function CommunityVideos() {
   const { user } = useAuth();
   const { isAdmin } = useAdmin();
+  const { db } = useFirebase();
   const { toast } = useToast();
   const [videos, setVideos] = useState<CommunityVideo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!db) return;
     const fetchVideos = async () => {
       try {
         const videosCollection = collection(db, "community-videos");
@@ -75,7 +77,7 @@ export function CommunityVideos() {
       }
     };
     fetchVideos();
-  }, [toast]);
+  }, [db, toast]);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -87,7 +89,7 @@ export function CommunityVideos() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if(!user) return;
+    if(!user || !db) return;
 
     const youtubeId = getYoutubeId(values.videoUrl);
     if (!youtubeId) {
@@ -131,6 +133,7 @@ export function CommunityVideos() {
   }
 
   const handleRemoveVideo = async (id: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "community-videos", id));
         setVideos(videos.filter(v => v.id !== id));
