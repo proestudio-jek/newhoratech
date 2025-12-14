@@ -13,9 +13,8 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { useFirebase } from "./firebase-provider"; // Importar o hook do novo provider
-import type { Firestore } from "firebase/firestore";
-import type { Auth } from "firebase/auth";
+import { useAuth as useFirebaseAuth, useFirestore } from "@/firebase";
+import type { UserProfile } from "@/lib/types";
 
 type User = {
   uid: string;
@@ -31,8 +30,6 @@ type AuthContextType = {
   signup: (email: string, pass: string) => Promise<void>;
   loading: boolean;
   initialLoading: boolean;
-  auth: Auth;
-  db: Firestore;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,7 +51,9 @@ const getFriendlyAuthErrorMessage = (errorCode: string) => {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { app, auth, db } = useFirebase(); // Obter instâncias do FirebaseProvider
+  const auth = useFirebaseAuth();
+  const db = useFirestore();
+
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -132,11 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
 
-      await setDoc(doc(db, "users", newUser.uid), {
-        email: newUser.email,
-        uid: newUser.uid,
+      const userProfile: Omit<UserProfile, 'id'> = {
+        email: newUser.email!,
         createdAt: serverTimestamp(),
-      });
+      };
+
+      await setDoc(doc(db, "users", newUser.uid), userProfile);
       
       router.push("/");
        toast({
@@ -159,8 +159,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     loading,
     initialLoading,
-    auth,
-    db,
   };
 
   if(initialLoading) {

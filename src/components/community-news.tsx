@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,8 +29,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, Newspaper, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { NewsArticle } from "@/lib/types";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp } from "firebase/firestore";
-
+import { collection, query, orderBy, serverTimestamp, doc } from "firebase/firestore";
+import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
 
 const formSchema = z.object({
   title: z.string().min(5, "O título deve ter pelo menos 5 caracteres."),
@@ -38,45 +38,22 @@ const formSchema = z.object({
 });
 
 export function CommunityNews() {
-  const { user, isAdmin, db } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const db = useFirestore();
   const { toast } = useToast();
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const newsCollectionRef = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "community-news");
+  }, [db]);
+  
+  const newsQuery = useMemoFirebase(() => {
+    if (!newsCollectionRef) return null;
+    return query(newsCollectionRef, orderBy("date", "desc"));
+  }, [newsCollectionRef]);
 
-  useEffect(() => {
-    if (!db) return;
-    
-    const fetchArticles = async () => {
-      try {
-        const articlesCollection = collection(db, "community-news");
-        const q = query(articlesCollection, orderBy("date", "desc"));
-        const articlesSnapshot = await getDocs(q);
-        const articlesList = articlesSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return { 
-            id: doc.id, 
-            title: data.title,
-            content: data.content,
-            date: (data.date as Timestamp).toDate().toISOString() 
-          };
-        });
-        setArticles(articlesList);
-      } catch (error) {
-        console.error("Failed to load news from Firestore", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao Carregar Notícias",
-          description: "Não foi possível carregar as notícias do banco de dados.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchArticles();
-  }, [db, toast]);
-
+  const { data: articles, isLoading } = useCollection<NewsArticle>(newsQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -87,57 +64,32 @@ export function CommunityNews() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !db) return;
+    if (!user || !newsCollectionRef) return;
 
     const newArticleData = {
       title: values.title,
       content: values.content,
-      date: new Date(),
+      date: serverTimestamp(),
       authorId: user.uid,
     };
 
-    try {
-      const docRef = await addDoc(collection(db, "community-news"), newArticleData);
-      const newArticle: NewsArticle = {
-        id: docRef.id,
-        title: newArticleData.title,
-        content: newArticleData.content,
-        date: newArticleData.date.toISOString(),
-      }
-      setArticles((prev) => [newArticle, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      form.reset();
-      setIsAdding(false);
-      toast({
-          title: "Notícia Publicada!",
-          description: `O artigo "${values.title}" foi publicado.`,
-      });
-    } catch(error) {
-       console.error("Error adding document: ", error);
-       toast({
-        variant: "destructive",
-        title: "Erro ao Publicar",
-        description: "Não foi possível salvar a notícia.",
-      });
-    }
+    addDocumentNonBlocking(newsCollectionRef, newArticleData);
+    form.reset();
+    setIsAdding(false);
+    toast({
+        title: "Notícia Publicada!",
+        description: `O artigo "${values.title}" foi publicado.`,
+    });
   }
   
   const handleRemoveArticle = async (id: string) => {
     if (!db) return;
-    try {
-        await deleteDoc(doc(db, "community-news", id));
-        setArticles(articles.filter(item => item.id !== id));
-        toast({
-            title: "Notícia Removida",
-            description: "O artigo foi removido."
-        })
-    } catch (error) {
-        console.error("Error removing document: ", error);
-        toast({
-            variant: "destructive",
-            title: "Erro ao Remover",
-            description: "Não foi possível remover a notícia."
-        });
-    }
+    const docRef = doc(db, "community-news", id);
+    deleteDocumentNonBlocking(docRef);
+    toast({
+        title: "Notícia Removida",
+        description: "O artigo foi removido."
+    });
   }
 
   if (isLoading) {
@@ -210,14 +162,14 @@ export function CommunityNews() {
             </div>
         )}
 
-      {articles.length > 0 ? (
+      {articles && articles.length > 0 ? (
         <div className="space-y-6">
           {articles.map((article) => (
             <Card key={article.id} className="group relative">
               <CardHeader>
                 <CardTitle>{article.title}</CardTitle>
                 <CardDescription>
-                  Publicado em {format(new Date(article.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  Publicado em {article.date ? format(new Date(article.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Data pendente'}
                 </CardDescription>
               </CardHeader>
               <CardContent>

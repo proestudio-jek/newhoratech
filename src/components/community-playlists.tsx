@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,50 +26,29 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, ListMusic, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PlaylistItem } from "@/lib/types";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, doc, serverTimestamp } from "firebase/firestore";
+import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
 
 const formSchema = z.object({
   title: z.string().min(3, "O nome do hino deve ter pelo menos 3 caracteres."),
 });
 
-
 export function CommunityPlaylists() {
-  const { user, isAdmin, db } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const db = useFirestore();
   const { toast } = useToast();
-  const [playlist, setPlaylist] = useState<PlaylistItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!db) return;
+  const playlistCollectionRef = useMemoFirebase(() => {
+    if(!db) return null;
+    return collection(db, "community-playlist")
+  }, [db]);
 
-    const fetchPlaylist = async () => {
-      try {
-        const playlistCollection = collection(db, "community-playlist");
-        const q = query(playlistCollection, orderBy("createdAt", "asc"));
-        const playlistSnapshot = await getDocs(q);
-        const playlistItems = playlistSnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                title: data.title,
-                createdAt: (data.createdAt as Timestamp).toDate().toISOString()
-            }
-        });
-        setPlaylist(playlistItems);
-      } catch (error) {
-        console.error("Failed to load playlist from Firestore", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao Carregar Playlist",
-          description: "Não foi possível buscar a playlist do banco de dados.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const playlistQuery = useMemoFirebase(() => {
+    if(!playlistCollectionRef) return null;
+    return query(playlistCollectionRef, orderBy("createdAt", "asc"));
+  }, [playlistCollectionRef]);
 
-    fetchPlaylist();
-  }, [db, toast]);
+  const { data: playlist, isLoading } = useCollection<PlaylistItem>(playlistQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -79,54 +58,29 @@ export function CommunityPlaylists() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !db) return;
+    if (!user || !playlistCollectionRef) return;
     
     const newHymnData = {
       title: values.title,
-      createdAt: new Date(),
+      createdAt: serverTimestamp(),
     };
 
-    try {
-        const docRef = await addDoc(collection(db, "community-playlist"), newHymnData);
-        const newHymn: PlaylistItem = {
-          id: docRef.id,
-          title: values.title,
-          createdAt: newHymnData.createdAt.toISOString()
-        };
-
-        setPlaylist((prev) => [...prev, newHymn]);
-        form.reset();
-        toast({
-            title: "Hino Adicionado!",
-            description: `"${values.title}" foi adicionado à playlist.`,
-        });
-    } catch(error) {
-        console.error("Error adding hymn: ", error);
-        toast({
-            variant: "destructive",
-            title: "Erro ao Adicionar",
-            description: "Não foi possível adicionar o hino à playlist.",
-        });
-    }
+    addDocumentNonBlocking(playlistCollectionRef, newHymnData);
+    form.reset();
+    toast({
+        title: "Hino Adicionado!",
+        description: `"${values.title}" foi adicionado à playlist.`,
+    });
   }
 
   const handleRemoveHymn = async (id: string) => {
     if (!db) return;
-    try {
-        await deleteDoc(doc(db, "community-playlist", id));
-        setPlaylist(playlist.filter(item => item.id !== id));
-        toast({
-            title: "Hino Removido",
-            description: "O hino foi removido da playlist."
-        })
-    } catch(error) {
-        console.error("Error removing hymn: ", error);
-        toast({
-            variant: "destructive",
-            title: "Erro ao Remover",
-            description: "Não foi possível remover o hino.",
-        })
-    }
+    const docRef = doc(db, "community-playlist", id);
+    deleteDocumentNonBlocking(docRef);
+    toast({
+        title: "Hino Removido",
+        description: "O hino foi removido da playlist."
+    })
   }
 
   if (isLoading) {
@@ -175,7 +129,7 @@ export function CommunityPlaylists() {
         </Card>
       )}
 
-      {playlist.length > 0 ? (
+      {playlist && playlist.length > 0 ? (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">

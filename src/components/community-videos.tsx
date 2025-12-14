@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,7 +26,8 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, Youtube, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CommunityVideo } from "@/lib/types";
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, doc, serverTimestamp } from "firebase/firestore";
+import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
 
 const formSchema = z.object({
   videoUrl: z.string().url("Por favor, insira uma URL válida do YouTube."),
@@ -40,41 +41,21 @@ function getYoutubeId(url: string) {
 }
 
 export function CommunityVideos() {
-  const { user, isAdmin, db } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const db = useFirestore();
   const { toast } = useToast();
-  const [videos, setVideos] = useState<CommunityVideo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const videosCollectionRef = useMemoFirebase(() => {
+    if(!db) return null;
+    return collection(db, "community-videos")
+  }, [db]);
 
-  useEffect(() => {
-    if (!db) return;
-    const fetchVideos = async () => {
-      try {
-        const videosCollection = collection(db, "community-videos");
-        const q = query(videosCollection, orderBy("createdAt", "desc"));
-        const videosSnapshot = await getDocs(q);
-        const videosList = videosSnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                youtubeId: data.youtubeId,
-                title: data.title,
-                createdAt: (data.createdAt as Timestamp).toDate().toISOString()
-            }
-        });
-        setVideos(videosList);
-      } catch (error) {
-        console.error("Failed to load videos from Firestore", error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao Carregar Vídeos",
-          description: "Não foi possível buscar os vídeos do banco de dados.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchVideos();
-  }, [db, toast]);
+  const videosQuery = useMemoFirebase(() => {
+    if(!videosCollectionRef) return null;
+    return query(videosCollectionRef, orderBy("createdAt", "desc"));
+  }, [videosCollectionRef]);
+
+  const { data: videos, isLoading } = useCollection<CommunityVideo>(videosQuery);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -86,7 +67,7 @@ export function CommunityVideos() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if(!user || !db) return;
+    if(!user || !videosCollectionRef) return;
 
     const youtubeId = getYoutubeId(values.videoUrl);
     if (!youtubeId) {
@@ -101,52 +82,26 @@ export function CommunityVideos() {
     const newVideoData = {
       youtubeId: youtubeId,
       title: values.title,
-      createdAt: new Date(),
+      createdAt: serverTimestamp(),
       addedBy: user.uid,
     };
-
-    try {
-      const docRef = await addDoc(collection(db, "community-videos"), newVideoData);
-      const newVideo: CommunityVideo = {
-        id: docRef.id,
-        youtubeId: newVideoData.youtubeId,
-        title: newVideoData.title,
-        createdAt: newVideoData.createdAt.toISOString()
-      };
-
-      setVideos((prev) => [newVideo, ...prev]);
-      form.reset();
-      toast({
-          title: "Vídeo Adicionado!",
-          description: "O vídeo do YouTube foi adicionado à galeria.",
-      });
-    } catch (error) {
-        console.error("Error adding video: ", error);
-        toast({
-            variant: "destructive",
-            title: "Erro ao Adicionar",
-            description: "Não foi possível adicionar o vídeo.",
-        });
-    }
+    
+    addDocumentNonBlocking(videosCollectionRef, newVideoData);
+    form.reset();
+    toast({
+        title: "Vídeo Adicionado!",
+        description: "O vídeo do YouTube foi adicionado à galeria.",
+    });
   }
 
   const handleRemoveVideo = async (id: string) => {
     if (!db) return;
-    try {
-        await deleteDoc(doc(db, "community-videos", id));
-        setVideos(videos.filter(v => v.id !== id));
-        toast({
-            title: "Vídeo Removido",
-            description: "O vídeo foi removido da galeria."
-        })
-    } catch(error) {
-        console.error("Error removing video: ", error);
-        toast({
-            variant: "destructive",
-            title: "Erro ao Remover",
-            description: "Não foi possível remover o vídeo.",
-        });
-    }
+    const docRef = doc(db, "community-videos", id);
+    deleteDocumentNonBlocking(docRef);
+    toast({
+        title: "Vídeo Removido",
+        description: "O vídeo foi removido da galeria."
+    })
   }
 
   if (isLoading) {
@@ -211,7 +166,7 @@ export function CommunityVideos() {
         </Card>
       )}
 
-      {videos.length > 0 ? (
+      {videos && videos.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {videos.map((video) => (
             <Card key={video.id} className="group relative">

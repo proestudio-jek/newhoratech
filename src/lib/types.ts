@@ -12,14 +12,19 @@ export type CommunityVideo = {
 };
 
 export type PlaylistItem = {
-    id: string;
-    title: string;
-    createdAt: string;
+  id: string;
+  title:string;
+  createdAt: string;
 };
 
 export type NewsArticle = {
-    id: string;
-    title: string;
-    content: string;
-    date: string;
+  id: string;
+  title: string;
+  content: string;
+  date: string;
 };
+export type UserProfile = {
+  id: string;
+  email: string;
+  createdAt: any;
+}
