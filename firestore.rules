@@ -1,34 +1,133 @@
+/**
+ * This ruleset enforces a role-based access control model for the 'Semente da Fé' application.
+ *
+ * Core Philosophy:
+ * The security model is designed to be public-read for most content, with write operations
+ * restricted to administrative users. User-specific data is kept private to the owner, with
+ * an override for administrative access. This ensures that content like hymns, videos, and
+ * images are widely accessible, while the management of this content and user data remains
+ * secure and controlled.
+ *
+ * Data Structure:
+ * The data is organized into several top-level collections:
+ * - /hymns: Publicly readable hymn data.
+ * - /calendarEntries: Publicly readable calendar data linking hymns to dates.
+ * - /videos: Publicly readable video gallery data.
+ * - /images: Publicly readable image carousel data.
+ * - /users: Private user profile data, including role information.
+ *
+ * Key Security Decisions:
+ * - Admin-Only Content Management: All write operations (create, update, delete) on the
+ *   public content collections (/hymns, /calendarEntries, /videos, /images) are restricted
+ *   to users with an 'admin' role. This is checked by reading the user's role from their
+ *   profile document in /users/{userId}.
+ * - Strict User Data Privacy: A user's profile in /users/{userId} is only accessible by
+ *   that user or an admin.
+ * - User Listing Disabled: To protect user privacy, it is not possible to list all
+ *   documents in the /users collection.
+ * - Denormalization for Authorization: The `role` field is denormalized onto each user's
+ *   document in the `/users` collection. This allows rules for other collections to perform
+ *   a direct and efficient `get()` call to check a user's role without needing to query a
+ *   separate collection.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Qualquer pessoa pode ler notícias, playlists, vídeos e hinos.
-    match /community-news/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Apenas usuários logados (admins) podem escrever
-    }
-    
-    match /community-playlist/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Apenas usuários logados (admins) podem escrever
+
+    // Helper functions for reusable logic
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    match /community-videos/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Apenas usuários logados (admins) podem escrever
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Regras para a coleção de usuários
+    // Checks if the requesting user has the 'admin' role.
+    // This requires a 'get' operation on the user's own profile document.
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    /**
+     * @description Rules for the 'hymns' collection.
+     * @path /hymns/{hymnId}
+     * @allow (get) Any user, signed in or not, can read a hymn.
+     * @allow (create) An authenticated admin can create a new hymn.
+     * @deny (update) A regular signed-in user cannot update a hymn.
+     * @principle Public read access for general content, with admin-only write access.
+     */
+    match /hymns/{hymnId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the 'calendarEntries' collection.
+     * @path /calendarEntries/{calendarEntryId}
+     * @allow (list) Any user, signed in or not, can view the list of calendar entries.
+     * @allow (create) An authenticated admin can create a new calendar entry.
+     * @deny (delete) A regular signed-in user cannot delete a calendar entry.
+     * @principle Public read access for general content, with admin-only write access.
+     */
+    match /calendarEntries/{calendarEntryId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the 'videos' collection.
+     * @path /videos/{videoId}
+     * @allow (get) Any user, signed in or not, can read video information.
+     * @allow (create) An authenticated admin can add a new video.
+     * @deny (update) A regular signed-in user cannot modify a video.
+     * @principle Public read access for general content, with admin-only write access.
+     */
+    match /videos/{videoId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the 'images' collection.
+     * @path /images/{imageId}
+     * @allow (get) Any user, signed in or not, can read image information.
+     * @allow (create) An authenticated admin can add a new image.
+     * @deny (delete) A regular signed-in user cannot delete an image.
+     * @principle Public read access for general content, with admin-only write access.
+     */
+    match /images/{imageId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Rules for the 'users' collection.
+     * @path /users/{userId}
+     * @allow (create) A new user can create their own user document if the doc ID matches their UID.
+     * @allow (update) The owner of the document or an admin can update the user document.
+     * @deny (list) No user can list all documents in the 'users' collection.
+     * @deny (get) A user cannot read another user's profile (unless they are an admin).
+     * @principle Enforces document ownership and data privacy. Prevents user enumeration.
+     */
     match /users/{userId} {
-      // Permite que um novo usuário seja criado se o ID do documento
-      // for o mesmo ID do usuário que está se cadastrando.
-      allow create: if request.auth != null && request.auth.uid == userId;
-      
-      // Permite que um usuário leia seus próprios dados.
-      allow read: if request.auth != null && request.auth.uid == userId;
-      
-      // Impede a atualização ou exclusão por enquanto.
-      allow update, delete: if false;
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if (isOwner(userId) || isAdmin()) && resource != null && request.resource.data.id == resource.data.id;
+      allow delete: if (isOwner(userId) || isAdmin()) && resource != null;
     }
   }
 }
