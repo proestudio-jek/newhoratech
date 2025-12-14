@@ -22,27 +22,27 @@ export default function Home() {
   const communitySections = [
     {
       title: "Semente da Fé",
-      description: "Hinos, calendários e notícias da comunidade Semente da Fé.",
+      description: "Hinos, calendários e notícias do conjunto Semente da Fé.",
       href: "/semente-da-fe",
       icon: Music2,
-      gradient: "from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50",
-      bannerGradient: "from-blue-500 to-purple-600",
+      gradient: "from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50",
+      bannerGradient: "from-green-500 to-emerald-600",
     },
     {
       title: "Louvores de Sião",
       description: "Explore os louvores e eventos de Sião.",
       href: "/louvores-de-siao",
       icon: Users,
-      gradient: "from-sky-100 to-blue-100 dark:from-sky-900/50 dark:to-blue-900/50",
-      bannerGradient: "from-sky-500 to-blue-600",
+      gradient: "from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50",
+      bannerGradient: "from-teal-500 to-cyan-600",
     },
     {
       title: "Grande Coral",
       description: "Apresentações e repertório do Grande Coral.",
       href: "/grande-coral",
       icon: Mic,
-      gradient: "from-fuchsia-100 to-pink-100 dark:from-fuchsia-900/50 dark:to-pink-900/50",
-      bannerGradient: "from-fuchsia-500 to-pink-600",
+      gradient: "from-lime-100 to-green-100 dark:from-lime-900/50 dark:to-green-900/50",
+      bannerGradient: "from-lime-500 to-green-600",
     },
   ];
 
@@ -93,7 +93,7 @@ export default function Home() {
       <section id="communities" className="container space-y-12">
         <div className="text-center">
           <h2 className="font-headline text-4xl font-bold text-primary">
-            Nossas Comunidades
+            Nossos Conjuntos
           </h2>
           <p className="mt-2 text-lg text-muted-foreground">
             Explore o conteúdo exclusivo de cada grupo musical.
@@ -134,7 +134,7 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="container">
-        <div className="rounded-lg bg-gradient-to-r from-primary via-purple-500 to-fuchsia-500 p-12 text-center text-primary-foreground">
+        <div className="rounded-lg bg-gradient-to-r from-primary via-emerald-500 to-teal-500 p-12 text-center text-primary-foreground">
           <h2 className="font-headline text-4xl font-bold">
             Junte-se à Comunidade PROMUSIC
           </h2>

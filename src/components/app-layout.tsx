@@ -74,7 +74,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
       
       {isMobile ? (
          <>
-            <p className="px-4 text-sm font-medium text-muted-foreground pt-4 border-t">Comunidades</p>
+            <p className="px-4 text-sm font-medium text-muted-foreground pt-4 border-t">Conjunto</p>
             {communityItems.map((item) => (
                  <Button
                     key={item.href}
@@ -94,7 +94,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-primary-foreground hover:bg-transparent hover:text-primary-foreground/80">
                    <Users className="mr-2 h-4 w-4"/>
-                   Comunidades
+                   Conjunto
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
