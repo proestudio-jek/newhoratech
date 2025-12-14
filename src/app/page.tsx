@@ -25,24 +25,24 @@ export default function Home() {
       description: "Hinos, calendários e notícias do conjunto Semente da Fé.",
       href: "/semente-da-fe",
       icon: Music2,
-      gradient: "from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50",
-      bannerGradient: "from-green-500 to-emerald-600",
+      gradient: "from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50",
+      bannerGradient: "from-blue-500 to-indigo-600",
     },
     {
       title: "Louvores de Sião",
       description: "Explore os louvores e eventos de Sião.",
       href: "/louvores-de-siao",
       icon: Users,
-      gradient: "from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50",
-      bannerGradient: "from-teal-500 to-cyan-600",
+      gradient: "from-sky-100 to-cyan-100 dark:from-sky-900/50 dark:to-cyan-900/50",
+      bannerGradient: "from-sky-500 to-cyan-600",
     },
     {
       title: "Grande Coral",
       description: "Apresentações e repertório do Grande Coral.",
       href: "/grande-coral",
       icon: Mic,
-      gradient: "from-lime-100 to-green-100 dark:from-lime-900/50 dark:to-green-900/50",
-      bannerGradient: "from-lime-500 to-green-600",
+      gradient: "from-purple-100 to-violet-100 dark:from-purple-900/50 dark:to-violet-900/50",
+      bannerGradient: "from-purple-500 to-violet-600",
     },
   ];
 
@@ -134,7 +134,7 @@ export default function Home() {
 
       {/* CTA Section */}
       <section className="container">
-        <div className="rounded-lg bg-gradient-to-r from-primary via-emerald-500 to-teal-500 p-12 text-center text-primary-foreground">
+        <div className="rounded-lg bg-gradient-to-r from-primary via-blue-500 to-indigo-500 p-12 text-center text-primary-foreground">
           <h2 className="font-headline text-4xl font-bold">
             Junte-se à Comunidade PROMUSIC
           </h2>
