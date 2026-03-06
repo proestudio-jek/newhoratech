@@ -28,7 +28,7 @@ import {
   Mic,
   Music2,
 } from "lucide-react";
-import { Button, buttonVariants } from "./ui/button";
+import { Button } from "./ui/button";
 import React from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -61,8 +61,8 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
           asChild
           variant={pathname === item.href ? (isMobile ? 'secondary' : 'link') : "ghost"}
           className={cn(
-            "justify-start",
-            !isMobile && "text-primary-foreground hover:bg-transparent hover:text-primary-foreground/80"
+            "justify-start font-medium",
+            !isMobile && "text-foreground hover:text-primary"
           )}
         >
           <Link href={item.href}>
@@ -92,7 +92,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
       ) : (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-primary-foreground hover:bg-transparent hover:text-primary-foreground/80">
+                <Button variant="ghost" className="text-foreground hover:text-primary font-medium">
                    <Users className="mr-2 h-4 w-4"/>
                    Conjunto
                 </Button>
@@ -143,7 +143,7 @@ function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <div className="flex gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
@@ -155,19 +155,19 @@ function SiteHeader() {
           <MainNav isMobile={false} />
         </div>
 
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <div className="hidden items-center space-x-2 md:flex">
-            <Label htmlFor="admin-mode" className="text-sm font-medium">Modo Admin</Label>
+        <div className="flex flex-1 items-center justify-end space-x-4">
+          <div className="hidden items-center space-x-2 md:flex border-l pl-4">
+            <Label htmlFor="admin-mode" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Modo Admin</Label>
             <Switch
               id="admin-mode"
               checked={isAdmin}
               onCheckedChange={handleAdminToggle}
-              aria-label="Toggle admin mode"
+              aria-label="Alternar modo administrador"
             />
           </div>
           <div className="hidden md:flex items-center gap-2">
             {user ? (
-                <Button variant="ghost" size="sm" onClick={logout}>
+                <Button variant="outline" size="sm" onClick={logout} className="border-primary text-primary hover:bg-primary hover:text-white">
                     Sair
                 </Button>
             ) : (
@@ -175,7 +175,7 @@ function SiteHeader() {
                 <Button asChild variant="ghost" size="sm">
                     <Link href="/login">Entrar</Link>
                 </Button>
-                <Button asChild size="sm">
+                <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
                     <Link href="/signup">Cadastre-se</Link>
                 </Button>
                 </>
@@ -188,7 +188,7 @@ function SiteHeader() {
                         className="md:hidden"
                     >
                         <Menu className="h-5 w-5" />
-                        <span className="sr-only">Toggle Menu</span>
+                        <span className="sr-only">Abrir Menu</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="pr-0 pt-12">
@@ -198,24 +198,24 @@ function SiteHeader() {
                   <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
                     <div className="flex flex-col space-y-3">
                        <MainNav isMobile={true} />
-                       <div className="flex flex-col space-y-2 pt-6 border-t">
-                        <div className="flex items-center space-x-2 px-4">
-                            <Label htmlFor="admin-mode-mobile">Modo Admin</Label>
+                       <div className="flex flex-col space-y-2 pt-6 border-t mt-6">
+                        <div className="flex items-center justify-between px-4 mb-4">
+                            <Label htmlFor="admin-mode-mobile" className="text-sm">Modo Admin</Label>
                             <Switch
                             id="admin-mode-mobile"
                             checked={isAdmin}
                             onCheckedChange={handleAdminToggle}
-                            aria-label="Toggle admin mode"
+                            aria-label="Alternar modo administrador"
                             />
                         </div>
                         {user ? (
                            <>
-                            <Button variant="ghost" onClick={() => { logout(); setIsMobileNavOpen(false);}}>
+                            <Button variant="ghost" onClick={() => { logout(); setIsMobileNavOpen(false);}} className="justify-start">
                                 <LogOut className="mr-2 h-4 w-4" /> Sair
                             </Button>
                            </>
                         ) : (
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2 pr-6">
                                 <Button asChild onClick={() => setIsMobileNavOpen(false)}>
                                     <Link href="/login">
                                     <LogIn className="mr-2 h-4 w-4" /> Entrar
@@ -246,40 +246,40 @@ function SiteFooter() {
   }
 
   return (
-    <footer className="w-full border-t bg-background">
+    <footer className="w-full border-t bg-background mt-auto">
       <div className="container py-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2">
           <Music className="h-6 w-6 text-primary" />
           <span className="font-bold font-headline text-lg text-primary">PROMUSIC</span>
         </div>
         <nav className="flex flex-wrap justify-center gap-4 md:gap-6 text-sm font-medium">
-          <Link href="#" className="text-foreground hover:text-primary transition-colors">
+          <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
             Sobre Nós
           </Link>
-          <Link href="#" className="text-foreground hover:text-primary transition-colors">
+          <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
             Contato
           </Link>
-          <Link href="#" className="text-foreground hover:text-primary transition-colors">
-            Política de Privacidade
+          <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
+            Privacidade
           </Link>
-          <Link href="#" className="text-foreground hover:text-primary transition-colors">
-            Termos de Serviço
+          <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
+            Termos
           </Link>
         </nav>
         <div className="flex items-center gap-4">
           <Link href="#" aria-label="Facebook">
-            <Facebook className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
+            <Facebook className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
           </Link>
           <Link href="#" aria-label="Twitter">
-            <Twitter className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
+            <Twitter className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
           </Link>
           <Link href="#" aria-label="Instagram">
-            <Instagram className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
+            <Instagram className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors" />
           </Link>
         </div>
       </div>
-      <div className="border-t bg-background/50">
-        <div className="container py-4 text-center text-sm text-muted-foreground">
+      <div className="border-t bg-muted/30">
+        <div className="container py-4 text-center text-xs text-muted-foreground">
           © {new Date().getFullYear()} PROMUSIC. Todos os direitos reservados.
         </div>
       </div>
@@ -299,7 +299,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {isAuthPage ? (
           <main>{children}</main>
         ) : (
-          <main className="container p-4 sm:p-6 lg:p-8">{children}</main>
+          <main className="container py-6 sm:py-8 lg:py-10">{children}</main>
         )}
         </div>
       <SiteFooter />
