@@ -21,6 +21,8 @@ export type CalendarEntry = {
   hymnId: string;
   hymnTitle: string;
   musicUrl?: string;
+  conjunto?: string;
+  createdAt: any;
 };
 
 export type CommunityVideo = {

@@ -50,9 +50,10 @@ type HymnSuggestionModalProps = {
   onClose: () => void;
   date: Date;
   onHymnAdd: (hymn: Omit<Hymn, "id">) => void;
+  targetConjunto?: string;
 };
 
-export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd }: HymnSuggestionModalProps) {
+export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd, targetConjunto }: HymnSuggestionModalProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -82,6 +83,7 @@ export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd }: HymnSu
       musicUrl: values.musicUrl || "",
       date: Timestamp.fromDate(date),
       hymnId: `manual-${Date.now()}`,
+      conjunto: targetConjunto || "Geral",
       createdAt: serverTimestamp(),
     };
 
@@ -90,7 +92,7 @@ export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd }: HymnSu
     onClose();
     toast({
       title: "Hino Adicionado!",
-      description: `"${values.title}" foi agendado para ${format(date, "PPP", { locale: ptBR })}.`,
+      description: `"${values.title}" foi agendado para ${format(date, "PPP", { locale: ptBR })} no conjunto ${targetConjunto || 'Geral'}.`,
     });
   }
 

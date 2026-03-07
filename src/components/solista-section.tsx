@@ -125,6 +125,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
       hymnId: schedulingHymn.id,
       hymnTitle: schedulingHymn.title,
       date: Timestamp.fromDate(selectedScheduleDate),
+      conjunto: schedulingHymn.conjunto, // Salva o conjunto do hino
       createdAt: serverTimestamp(),
     };
 
@@ -132,7 +133,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
     setSchedulingHymn(null);
     toast({
       title: "Hino Agendado!",
-      description: `"${schedulingHymn.title}" foi agendado para ${format(selectedScheduleDate, "dd/MM/yyyy")}.`,
+      description: `"${schedulingHymn.title}" foi agendado no calendário do conjunto ${schedulingHymn.conjunto} para ${format(selectedScheduleDate, "dd/MM/yyyy")}.`,
     });
   };
 

@@ -63,7 +63,7 @@ export function ContentPage({ title, description, extraTabs = [] }: ContentPageP
           ))}
         </TabsList>
         <TabsContent value="calendar" className="mt-6">
-          <HymnCalendar />
+          <HymnCalendar targetConjunto={title} />
         </TabsContent>
         <TabsContent value="videos" className="mt-6">
           <CommunityVideos />

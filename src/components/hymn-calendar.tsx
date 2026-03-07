@@ -9,13 +9,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { collection, query, doc, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, query, doc, serverTimestamp, Timestamp, where } from "firebase/firestore";
 import type { CalendarEntry, Hymn } from "@/lib/types";
 import { Music, PlusCircle, Trash2, CalendarHeart, Loader2 } from "lucide-react";
 import { HymnSuggestionModal } from "./hymn-suggestion-modal";
 import { DayContent as DayPickerDayContent } from "react-day-picker";
 
-export function HymnCalendar() {
+interface HymnCalendarProps {
+  targetConjunto?: string;
+}
+
+export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, isAdmin } = useAuth();
@@ -28,8 +32,12 @@ export function HymnCalendar() {
 
   const calendarQuery = useMemoFirebase(() => {
     if (!calendarColRef) return null;
+    // Se houver um conjunto alvo, filtramos por ele
+    if (targetConjunto) {
+      return query(calendarColRef, where("conjunto", "==", targetConjunto));
+    }
     return query(calendarColRef);
-  }, [calendarColRef]);
+  }, [calendarColRef, targetConjunto]);
 
   const { data: allEntries, isLoading } = useCollection<CalendarEntry>(calendarQuery);
 
@@ -49,6 +57,7 @@ export function HymnCalendar() {
       musicUrl: hymn.musicUrl || "",
       date: Timestamp.fromDate(date),
       hymnId: `manual-${Date.now()}`,
+      conjunto: targetConjunto || "Geral",
       createdAt: serverTimestamp(),
     };
 
@@ -159,6 +168,7 @@ export function HymnCalendar() {
           onClose={() => setIsModalOpen(false)}
           date={date}
           onHymnAdd={handleAddHymn}
+          targetConjunto={targetConjunto}
         />
       )}
     </div>
