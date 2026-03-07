@@ -7,6 +7,7 @@ import { CommunityPlaylists } from "@/components/community-playlists";
 import { CommunityNews } from "@/components/community-news";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Video, ListMusic, Newspaper, LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type CustomTab = {
   value: string;
@@ -22,9 +23,11 @@ type ContentPageProps = {
 };
 
 export function ContentPage({ title, description, extraTabs = [] }: ContentPageProps) {
+  const totalTabs = 4 + extraTabs.length;
+
   return (
     <div className="space-y-6">
-      <header>
+      <header className="border-b pb-4">
         <h1 className="font-headline text-4xl font-bold text-primary">
           {title}
         </h1>
@@ -32,25 +35,28 @@ export function ContentPage({ title, description, extraTabs = [] }: ContentPageP
       </header>
 
       <Tabs defaultValue="calendar" className="w-full">
-        <TabsList className={`grid w-full grid-cols-${4 + extraTabs.length}`}>
-          <TabsTrigger value="calendar">
+        <TabsList className={cn(
+            "grid w-full h-auto p-1 bg-muted/50 rounded-xl",
+            totalTabs === 4 ? "grid-cols-4" : totalTabs === 5 ? "grid-cols-5" : "grid-cols-6"
+        )}>
+          <TabsTrigger value="calendar" className="py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Calendar className="mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Calendário</span>
           </TabsTrigger>
-          <TabsTrigger value="videos">
+          <TabsTrigger value="videos" className="py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Video className="mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Vídeos</span>
           </TabsTrigger>
-          <TabsTrigger value="playlists">
+          <TabsTrigger value="playlists" className="py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <ListMusic className="mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Playlists</span>
           </TabsTrigger>
-          <TabsTrigger value="news">
+          <TabsTrigger value="news" className="py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Newspaper className="mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Notícias</span>
           </TabsTrigger>
           {extraTabs.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value}>
+            <TabsTrigger key={tab.value} value={tab.value} className="py-2.5 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <tab.icon className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">{tab.label}</span>
             </TabsTrigger>

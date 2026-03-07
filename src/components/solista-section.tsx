@@ -14,21 +14,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Search, Calendar, User, Music, Trash2, Filter } from "lucide-react";
+import { PlusCircle, Search, Calendar, User, Music, Trash2, Filter, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { SolistaHymn, UserProfile } from "@/lib/types";
 import { useDoc } from "@/firebase";
+import Link from "next/link";
 
 const hymnFormSchema = z.object({
-  title: z.string().min(3, "Título muito curto"),
-  lyrics: z.string().min(10, "Letra muito curta"),
+  title: z.string().min(3, "O título deve ter pelo menos 3 caracteres."),
+  lyrics: z.string().min(10, "A letra deve ter pelo menos 10 caracteres."),
 });
 
 const profileFormSchema = z.object({
-  username: z.string().min(3, "Nome muito curto"),
-  conjunto: z.string().min(1, "Selecione um conjunto"),
+  username: z.string().min(3, "O nome deve ter pelo menos 3 caracteres."),
+  conjunto: z.string().min(1, "Selecione o conjunto ao qual você pertence."),
 });
 
 export function SolistaSection() {
@@ -71,12 +72,14 @@ export function SolistaSection() {
 
   const handleUpdateProfile = (values: z.infer<typeof profileFormSchema>) => {
     if (!userRef) return;
-    // Mutação não-bloqueante conforme diretrizes
     updateDocumentNonBlocking(userRef, {
       username: values.username,
       conjunto: values.conjunto,
     });
-    toast({ title: "Perfil Atualizado!", description: "Agora você pode adicionar seus hinos." });
+    toast({ 
+      title: "Perfil Atualizado!", 
+      description: "Agora você pode postar seus hinos com sua identificação completa." 
+    });
   };
 
   const handleAddHymn = (values: z.infer<typeof hymnFormSchema>) => {
@@ -94,13 +97,13 @@ export function SolistaSection() {
     addDocumentNonBlocking(hymnsColRef, newHymn);
     hymnForm.reset();
     setIsAddingHymn(false);
-    toast({ title: "Hino Adicionado!", description: "Seu hino foi publicado com sucesso." });
+    toast({ title: "Hino Adicionado!", description: "Seu hino foi publicado e está disponível na galeria." });
   };
 
   const handleRemoveHymn = (id: string) => {
     if (!db) return;
     deleteDocumentNonBlocking(doc(db, "solistaHymns", id));
-    toast({ title: "Hino Removido" });
+    toast({ title: "Hino Removido", description: "O hino foi excluído da galeria." });
   };
 
   const filteredHymns = allHymns?.filter(hymn => {
@@ -115,24 +118,37 @@ export function SolistaSection() {
 
   if (!user) {
     return (
-      <div className="text-center py-12">
-        <User className="mx-auto size-12 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-bold">Acesso Restrito</h2>
-        <p className="text-muted-foreground">Faça login para gerenciar seus hinos como solista.</p>
-        <Button className="mt-4" asChild>
-          <a href="/login">Entrar agora</a>
-        </Button>
-      </div>
+      <Card className="border-dashed py-12 text-center">
+        <CardContent className="space-y-4">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+            <User className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold">Acesso aos Solistas</h2>
+            <p className="mx-auto max-w-sm text-muted-foreground">
+              Para ver os hinos dos solistas ou postar o seu, você precisa estar logado na plataforma.
+            </p>
+          </div>
+          <Button className="mt-4" asChild>
+            <Link href="/login">
+              <LogIn className="mr-2 h-4 w-4" /> Fazer Login agora
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-8">
       {!profile?.conjunto && (
-        <Card className="border-primary/50 bg-primary/5">
+        <Card className="border-primary/50 bg-primary/5 shadow-lg">
           <CardHeader>
-            <CardTitle>Identifique-se como Solista</CardTitle>
-            <CardDescription>Para postar hinos, precisamos saber seu nome e conjunto.</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+                <PlusCircle className="text-primary"/> 
+                Configure seu Perfil de Solista
+            </CardTitle>
+            <CardDescription>Para que os outros saibam quem você é, informe seu nome artístico e o conjunto que você representa.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...profileForm}>
@@ -143,9 +159,9 @@ export function SolistaSection() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome Artístico / Completo</FormLabel>
+                        <FormLabel>Seu Nome / Nome do Solista</FormLabel>
                         <FormControl>
-                          <Input placeholder="Seu nome" {...field} />
+                          <Input placeholder="Ex: Cantor João Silva" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -156,11 +172,11 @@ export function SolistaSection() {
                     name="conjunto"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Conjunto</FormLabel>
+                        <FormLabel>Seu Conjunto Principal</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione seu conjunto" />
+                              <SelectValue placeholder="Selecione o conjunto" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -174,7 +190,7 @@ export function SolistaSection() {
                     )}
                   />
                 </div>
-                <Button type="submit">Confirmar Perfil</Button>
+                <Button type="submit" className="w-full md:w-auto">Salvar Identificação</Button>
               </form>
             </Form>
           </CardContent>
@@ -183,19 +199,20 @@ export function SolistaSection() {
 
       {profile?.conjunto && (
         <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <Music className="text-primary" /> Meus Hinos e Solistas
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-2xl font-bold flex items-center gap-2 text-primary">
+              <Music className="h-6 w-6" /> Galeria de Solistas
             </h2>
-            <Button onClick={() => setIsAddingHymn(!isAddingHymn)}>
-              <PlusCircle className="mr-2" /> {isAddingHymn ? "Cancelar" : "Novo Hino"}
+            <Button onClick={() => setIsAddingHymn(!isAddingHymn)} variant={isAddingHymn ? "outline" : "default"}>
+              {isAddingHymn ? "Fechar Formulário" : <><PlusCircle className="mr-2 h-4 w-4" /> Postar Meu Hino</>}
             </Button>
           </div>
 
           {isAddingHymn && (
-            <Card>
+            <Card className="animate-in fade-in slide-in-from-top-4">
               <CardHeader>
                 <CardTitle>Postar Novo Hino</CardTitle>
+                <CardDescription>O hino será postado em seu nome ({profile.username}) e vinculado ao conjunto {profile.conjunto}.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...hymnForm}>
@@ -218,87 +235,92 @@ export function SolistaSection() {
                       name="lyrics"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Letra</FormLabel>
+                          <FormLabel>Letra do Hino</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Cole a letra do hino aqui..." rows={6} {...field} />
+                            <Textarea placeholder="Cole a letra completa do hino aqui..." rows={8} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button type="submit">Publicar Hino</Button>
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button type="button" variant="ghost" onClick={() => setIsAddingHymn(false)}>Cancelar</Button>
+                        <Button type="submit">Publicar Agora</Button>
+                    </div>
                   </form>
                 </Form>
               </CardContent>
             </Card>
           )}
 
-          <Card>
+          <Card className="bg-muted/30">
             <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Buscar por nome ou título..." 
-                    className="pl-9"
+                    placeholder="Buscar por hino ou solista..." 
+                    className="pl-9 bg-white"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-3 size-4 text-muted-foreground" />
+                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input 
                     type="date" 
-                    className="pl-9"
+                    className="pl-9 bg-white"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
                   />
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Filter className="size-4" />
-                  <span>{filteredHymns?.length || 0} hinos encontrados</span>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-white border rounded-md px-3 h-10">
+                  <Filter className="h-4 w-4" />
+                  <span>Exibindo {filteredHymns?.length || 0} hinos</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-6">
             {filteredHymns?.map((hymn) => (
-              <Card key={hymn.id} className="group overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                  <div className="p-6 flex-1">
+              <Card key={hymn.id} className="group overflow-hidden border-l-4 border-l-primary hover:shadow-md transition-shadow">
+                <div className="p-6">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl">{hymn.title}</CardTitle>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <User className="size-3" /> {hymn.solistaName}
+                      <div className="space-y-1">
+                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{hymn.title}</CardTitle>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1.5 font-medium text-foreground">
+                            <User className="h-4 w-4 text-primary" /> {hymn.solistaName}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="size-3" /> {hymn.createdAt ? format(new Date(hymn.createdAt.seconds * 1000), "dd/MM/yyyy", { locale: ptBR }) : "..."}
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="h-4 w-4" /> {hymn.createdAt ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "..."}
                           </span>
-                          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-xs">
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                             {hymn.conjunto}
                           </span>
                         </div>
                       </div>
                       {hymn.solistaId === user.uid && (
-                        <Button variant="ghost" size="icon" className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveHymn(hymn.id)}>
-                          <Trash2 className="size-4" />
+                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleRemoveHymn(hymn.id)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
                     </div>
-                    <div className="mt-4 text-muted-foreground line-clamp-3 whitespace-pre-wrap text-sm italic">
-                      {hymn.lyrics}
+                    <div className="mt-6 border-t pt-4">
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Letra / Repertório</h4>
+                        <div className="text-muted-foreground whitespace-pre-wrap text-sm italic leading-relaxed bg-muted/20 p-4 rounded-lg">
+                          {hymn.lyrics}
+                        </div>
                     </div>
-                  </div>
                 </div>
               </Card>
             ))}
             {filteredHymns?.length === 0 && !isLoading && (
-              <div className="text-center py-12 text-muted-foreground">
-                <Music className="mx-auto size-12 mb-4 opacity-20" />
-                <p>Nenhum hino encontrado com esses filtros.</p>
+              <div className="text-center py-20 bg-muted/20 rounded-xl border-2 border-dashed">
+                <Music className="mx-auto h-12 w-12 mb-4 opacity-20 text-primary" />
+                <h3 className="text-lg font-semibold">Nenhum hino encontrado</h3>
+                <p className="text-muted-foreground">Tente ajustar sua busca ou filtros de data.</p>
               </div>
             )}
           </div>

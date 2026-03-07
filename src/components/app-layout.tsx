@@ -59,10 +59,10 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
         <Button
           key={item.href}
           asChild
-          variant={pathname === item.href ? (isMobile ? 'secondary' : 'link') : "ghost"}
+          variant={pathname === item.href ? (isMobile ? 'secondary' : 'ghost') : "ghost"}
           className={cn(
             "justify-start font-medium",
-            !isMobile && "text-foreground hover:text-primary"
+            isMobile ? "text-foreground" : "text-white hover:bg-white/20"
           )}
         >
           <Link href={item.href}>
@@ -74,7 +74,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
       
       {isMobile ? (
          <>
-            <p className="px-4 text-sm font-medium text-muted-foreground pt-4 border-t">Conjunto</p>
+            <p className="px-4 text-sm font-medium text-muted-foreground pt-4 border-t">Conjuntos</p>
             {communityItems.map((item) => (
                  <Button
                     key={item.href}
@@ -92,9 +92,9 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
       ) : (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-foreground hover:text-primary font-medium">
+                <Button variant="ghost" className="text-white hover:bg-white/20 font-medium">
                    <Users className="mr-2 h-4 w-4"/>
-                   Conjunto
+                   Conjuntos
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -143,39 +143,39 @@ function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 shadow-md">
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
         <div className="flex gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
-             <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+             <div className="flex size-9 items-center justify-center rounded-lg bg-white text-blue-600">
                 <Music className="size-5" />
              </div>
-            <span className="inline-block font-bold font-headline text-primary text-2xl">PROMUSIC</span>
+            <span className="inline-block font-bold font-headline text-white text-2xl">PROMUSIC</span>
           </Link>
           <MainNav isMobile={false} />
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <div className="hidden items-center space-x-2 md:flex border-l pl-4">
-            <Label htmlFor="admin-mode" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Modo Admin</Label>
+          <div className="hidden items-center space-x-2 md:flex border-l border-white/20 pl-4">
+            <Label htmlFor="admin-mode" className="text-[10px] font-bold text-white/80 uppercase tracking-widest">Modo Admin</Label>
             <Switch
               id="admin-mode"
               checked={isAdmin}
               onCheckedChange={handleAdminToggle}
-              aria-label="Alternar modo administrador"
+              className="data-[state=checked]:bg-white data-[state=unchecked]:bg-blue-400"
             />
           </div>
           <div className="hidden md:flex items-center gap-2">
             {user ? (
-                <Button variant="outline" size="sm" onClick={logout} className="border-primary text-primary hover:bg-primary hover:text-white">
+                <Button variant="outline" size="sm" onClick={logout} className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent">
                     Sair
                 </Button>
             ) : (
                 <>
-                <Button asChild variant="ghost" size="sm">
+                <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/20">
                     <Link href="/login">Entrar</Link>
                 </Button>
-                <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
+                <Button asChild size="sm" className="bg-white text-blue-600 hover:bg-white/90">
                     <Link href="/signup">Cadastre-se</Link>
                 </Button>
                 </>
@@ -185,9 +185,9 @@ function SiteHeader() {
                 <SheetTrigger asChild>
                     <Button
                         variant="ghost"
-                        className="md:hidden"
+                        className="md:hidden text-white"
                     >
-                        <Menu className="h-5 w-5" />
+                        <Menu className="h-6 w-6" />
                         <span className="sr-only">Abrir Menu</span>
                     </Button>
                 </SheetTrigger>
@@ -205,7 +205,6 @@ function SiteHeader() {
                             id="admin-mode-mobile"
                             checked={isAdmin}
                             onCheckedChange={handleAdminToggle}
-                            aria-label="Alternar modo administrador"
                             />
                         </div>
                         {user ? (

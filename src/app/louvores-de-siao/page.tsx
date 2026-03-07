@@ -16,7 +16,7 @@ export default function LouvoresDeSiaoPage() {
   return (
     <ContentPage
       title="Louvores de Sião"
-      description="Explore os louvores, eventos e a galeria de solistas de Sião."
+      description="Explore os louvores, eventos e a galeria de hinos dos solistas do conjunto Sião."
       extraTabs={[solistaTab]}
     />
   );
