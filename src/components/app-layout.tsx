@@ -50,7 +50,7 @@ const communityItems = [
     { href: "/grande-coral", label: "Grande Coral", icon: Mic },
 ]
 
-function MainNav({ isMobile }: { isMobile: boolean }) {
+function MainNav({ isMobile, onItemClick }: { isMobile: boolean; onItemClick?: () => void }) {
   const pathname = usePathname();
   
   const navLinks = (
@@ -64,6 +64,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
             "justify-start font-medium",
             isMobile ? "text-foreground" : "text-white hover:bg-white/20"
           )}
+          onClick={onItemClick}
         >
           <Link href={item.href}>
             <item.icon className="mr-2 h-4 w-4" />
@@ -81,6 +82,7 @@ function MainNav({ isMobile }: { isMobile: boolean }) {
                     asChild
                     variant={pathname === item.href ? 'secondary' : "ghost"}
                     className="justify-start"
+                    onClick={onItemClick}
                     >
                     <Link href={item.href}>
                         <item.icon className="mr-2 h-4 w-4" />
@@ -142,6 +144,8 @@ function SiteHeader() {
     }
   };
 
+  const closeMobileNav = () => setIsMobileNavOpen(false);
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 shadow-md">
       <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
@@ -197,7 +201,7 @@ function SiteHeader() {
                    </SheetHeader>
                   <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
                     <div className="flex flex-col space-y-3">
-                       <MainNav isMobile={true} />
+                       <MainNav isMobile={true} onItemClick={closeMobileNav} />
                        <div className="flex flex-col space-y-2 pt-6 border-t mt-6">
                         <div className="flex items-center justify-between px-4 mb-4">
                             <Label htmlFor="admin-mode-mobile" className="text-sm">Modo Admin</Label>
@@ -209,18 +213,18 @@ function SiteHeader() {
                         </div>
                         {user ? (
                            <>
-                            <Button variant="ghost" onClick={() => { logout(); setIsMobileNavOpen(false);}} className="justify-start">
+                            <Button variant="ghost" onClick={() => { logout(); closeMobileNav(); }} className="justify-start">
                                 <LogOut className="mr-2 h-4 w-4" /> Sair
                             </Button>
                            </>
                         ) : (
                             <div className="flex flex-col gap-2 pr-6">
-                                <Button asChild onClick={() => setIsMobileNavOpen(false)}>
+                                <Button asChild onClick={closeMobileNav}>
                                     <Link href="/login">
                                     <LogIn className="mr-2 h-4 w-4" /> Entrar
                                     </Link>
                                 </Button>
-                                 <Button asChild variant="outline" onClick={() => setIsMobileNavOpen(false)}>
+                                 <Button asChild variant="outline" onClick={closeMobileNav}>
                                     <Link href="/signup">
                                      Cadastre-se
                                     </Link>
