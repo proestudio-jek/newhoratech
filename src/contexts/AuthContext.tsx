@@ -11,9 +11,9 @@ import {
   type User as FirebaseUser,
   type AuthError
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth as useFirebaseAuth, useFirestore } from "@/firebase";
+import { useAuth as useFirebaseAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import type { UserProfile } from "@/lib/types";
 
 type User = {
@@ -41,9 +41,10 @@ const AUTH_ERROR_MAP: Record<string, string> = {
     'auth/wrong-password': 'A senha está incorreta.',
     'auth/email-already-in-use': 'Este e-mail já está em uso por outra conta.',
     'auth/weak-password': 'A senha é muito fraca. Tente uma mais forte.',
-    'auth/operation-not-allowed': 'Operação não permitida.',
+    'auth/operation-not-allowed': 'Operação não permitida. Verifique se o provedor de E-mail/Senha está ativado no Console do Firebase.',
     'auth/configuration-not-found': 'Erro de configuração do Firebase. Verifique suas credenciais.',
     'auth/api-key-not-valid': 'Chave de API do Firebase inválida.',
+    'auth/invalid-credential': 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.',
 };
 
 const getFriendlyAuthErrorMessage = (errorCode: string) => {
@@ -80,7 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [auth, router, pathname]);
 
   const handleAuthError = (error: AuthError) => {
-    console.error(`Firebase Auth Error (${error.code}):`, error.message);
+    // Erros de autenticação são tratados aqui. 
+    // Erros de permissão do Firestore são tratados pelo FirebaseErrorListener.
     toast({
         variant: "destructive",
         title: "Erro de Autenticação",
@@ -114,7 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "Você saiu da sua conta.",
       });
     } catch (error: any) {
-       console.error("Error signing out:", error);
        toast({
         variant: "destructive",
         title: "Erro no Logout",
@@ -131,12 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
 
-      const userProfile: Omit<UserProfile, 'id'> = {
+      const userProfile = {
         email: newUser.email!,
         createdAt: serverTimestamp(),
       };
 
-      await setDoc(doc(db, "users", newUser.uid), userProfile);
+      // Operação não-bloqueante para criar o perfil do usuário no Firestore
+      setDocumentNonBlocking(doc(db, "users", newUser.uid), userProfile, { merge: true });
       
       router.push("/");
        toast({
@@ -162,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   if(initialLoading) {
-    return null; // ou um componente de loading global
+    return null;
   }
 
   return (

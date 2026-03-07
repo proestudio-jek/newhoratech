@@ -6,8 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, where, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
+import { collection, query, orderBy, serverTimestamp, doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -40,7 +40,6 @@ export function SolistaSection() {
   const [filterDate, setFilterDate] = useState("");
   const [isAddingHymn, setIsAddingHymn] = useState(false);
 
-  // Perfil do usuário logado
   const userRef = useMemoFirebase(() => {
     if (!db || !user) return null;
     return doc(db, "users", user.uid);
@@ -48,7 +47,6 @@ export function SolistaSection() {
   
   const { data: profile } = useDoc<UserProfile>(userRef);
 
-  // Coleção de hinos
   const hymnsColRef = useMemoFirebase(() => {
     if (!db) return null;
     return collection(db, "solistaHymns");
@@ -71,27 +69,24 @@ export function SolistaSection() {
     defaultValues: { username: profile?.username || "", conjunto: profile?.conjunto || "" },
   });
 
-  const handleUpdateProfile = async (values: z.infer<typeof profileFormSchema>) => {
+  const handleUpdateProfile = (values: z.infer<typeof profileFormSchema>) => {
     if (!userRef) return;
-    try {
-      await updateDoc(userRef, {
-        username: values.username,
-        conjunto: values.conjunto,
-      });
-      toast({ title: "Perfil Atualizado!", description: "Agora você pode adicionar seus hinos." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Erro ao atualizar perfil" });
-    }
+    // Mutação não-bloqueante conforme diretrizes
+    updateDocumentNonBlocking(userRef, {
+      username: values.username,
+      conjunto: values.conjunto,
+    });
+    toast({ title: "Perfil Atualizado!", description: "Agora você pode adicionar seus hinos." });
   };
 
   const handleAddHymn = (values: z.infer<typeof hymnFormSchema>) => {
-    if (!hymnsColRef || !profile) return;
+    if (!hymnsColRef || !profile || !user) return;
     
     const newHymn = {
       title: values.title,
       lyrics: values.lyrics,
-      solistaId: user?.uid,
-      solistaName: profile.username,
+      solistaId: user.uid,
+      solistaName: profile.username || user.email,
       conjunto: profile.conjunto,
       createdAt: serverTimestamp(),
     };
@@ -108,10 +103,9 @@ export function SolistaSection() {
     toast({ title: "Hino Removido" });
   };
 
-  // Filtragem
   const filteredHymns = allHymns?.filter(hymn => {
     const matchesSearch = hymn.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          hymn.solistaName.toLowerCase().includes(searchTerm.toLowerCase());
+                          (hymn.solistaName && hymn.solistaName.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const hymnDate = hymn.createdAt ? format(new Date(hymn.createdAt.seconds * 1000), "yyyy-MM-dd") : "";
     const matchesDate = filterDate === "" || hymnDate === filterDate;
@@ -134,7 +128,6 @@ export function SolistaSection() {
 
   return (
     <div className="space-y-8">
-      {/* Configuração de Perfil Solista */}
       {!profile?.conjunto && (
         <Card className="border-primary/50 bg-primary/5">
           <CardHeader>
@@ -188,7 +181,6 @@ export function SolistaSection() {
         </Card>
       )}
 
-      {/* Adicionar Novo Hino */}
       {profile?.conjunto && (
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
@@ -241,7 +233,6 @@ export function SolistaSection() {
             </Card>
           )}
 
-          {/* Filtros */}
           <Card>
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -271,7 +262,6 @@ export function SolistaSection() {
             </CardContent>
           </Card>
 
-          {/* Galeria de Hinos */}
           <div className="grid grid-cols-1 gap-4">
             {filteredHymns?.map((hymn) => (
               <Card key={hymn.id} className="group overflow-hidden">
