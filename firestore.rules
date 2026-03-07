@@ -3,56 +3,63 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Regra auxiliar para verificar se o usuário é o dono do hino
-    function isOwner(solistaId) {
-      return request.auth != null && request.auth.uid == solistaId;
+    // Função auxiliar para verificar se o usuário está logado
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Qualquer pessoa pode ler notícias, playlists e vídeos do conjunto.
-    match /community-news/{docId} {
+    // Permite leitura pública para conteúdos dos conjuntos
+    // Permite escrita para qualquer usuário autenticado (gerenciada via UI isAdmin)
+    
+    match /community-news/{id} {
       allow read: if true;
-      allow write: if request.auth != null; 
+      allow write: if isSignedIn();
     }
     
-    match /community-playlist/{docId} {
+    match /community-playlist/{id} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
     }
 
-    match /community-videos/{docId} {
+    match /community-videos/{id} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
     }
 
-    // Regras para hinos de solistas
-    match /solistaHymns/{docId} {
-      // Todos podem ver os hinos
+    match /calendarEntries/{id} {
       allow read: if true;
-      // Usuários logados podem criar novos hinos
-      allow create: if request.auth != null;
+      allow write: if isSignedIn();
+    }
+
+    match /solistaHymns/{id} {
+      allow read: if true;
+      allow create: if isSignedIn();
       // Apenas o dono do hino pode editar ou excluir
-      allow update, delete: if isOwner(resource.data.solistaId);
+      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
     }
-
-    // Regras para o calendário de hinos
-    match /calendarEntries/{docId} {
-      // Todos podem ver a programação do calendário
+    
+    // Entidades baseadas no backend.json
+    match /hymns/{id} {
       allow read: if true;
-      // Usuários logados podem agendar ou remover hinos do calendário
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
+    }
+    
+    match /videos/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /images/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
-    // Regras para a coleção de usuários
+    // Perfis de usuários
     match /users/{userId} {
-      // Permite que um novo usuário seja criado se o ID do documento for o mesmo ID do usuário
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // Permite que um usuário leia e atualize seus próprios dados
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      // Impede a exclusão de perfis por enquanto
-      allow delete: if false;
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Regra geral de negação para qualquer outra coleção não especificada
+    // Bloqueia qualquer outro acesso por padrão
     match /{document=**} {
       allow read, write: if false;
     }
