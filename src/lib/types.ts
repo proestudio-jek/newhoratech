@@ -15,6 +15,14 @@ export type SolistaHymn = {
   createdAt: any;
 };
 
+export type CalendarEntry = {
+  id: string;
+  date: any;
+  hymnId: string;
+  hymnTitle: string;
+  musicUrl?: string;
+};
+
 export type CommunityVideo = {
   id: string;
   youtubeId: string;

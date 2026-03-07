@@ -6,20 +6,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
-import { collection, query, orderBy, serverTimestamp, doc } from "firebase/firestore";
+import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, updateDocumentNonBlocking, useDoc } from "@/firebase";
+import { collection, query, orderBy, serverTimestamp, doc, Timestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Search, Calendar, User, Music, Trash2, Filter, LogIn } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { PlusCircle, Search, Calendar as CalendarIcon, User, Music, Trash2, Filter, LogIn, CalendarPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { SolistaHymn, UserProfile } from "@/lib/types";
-import { useDoc } from "@/firebase";
 import Link from "next/link";
 
 const hymnFormSchema = z.object({
@@ -40,6 +41,8 @@ export function SolistaSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [isAddingHymn, setIsAddingHymn] = useState(false);
+  const [schedulingHymn, setSchedulingHymn] = useState<SolistaHymn | null>(null);
+  const [selectedScheduleDate, setSelectedScheduleDate] = useState<Date | undefined>(new Date());
 
   const userRef = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -51,6 +54,11 @@ export function SolistaSection() {
   const hymnsColRef = useMemoFirebase(() => {
     if (!db) return null;
     return collection(db, "solistaHymns");
+  }, [db]);
+
+  const calendarColRef = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "calendarEntries");
   }, [db]);
 
   const allHymnsQuery = useMemoFirebase(() => {
@@ -106,11 +114,31 @@ export function SolistaSection() {
     toast({ title: "Hino Removido", description: "O hino foi excluído da galeria." });
   };
 
+  const handleScheduleHymn = () => {
+    if (!schedulingHymn || !selectedScheduleDate || !calendarColRef) return;
+
+    const newEntry = {
+      hymnId: schedulingHymn.id,
+      hymnTitle: schedulingHymn.title,
+      date: Timestamp.fromDate(selectedScheduleDate),
+      createdAt: serverTimestamp(),
+    };
+
+    addDocumentNonBlocking(calendarColRef, newEntry);
+    setSchedulingHymn(null);
+    toast({
+      title: "Hino Agendado!",
+      description: `"${schedulingHymn.title}" foi agendado para ${format(selectedScheduleDate, "dd/MM/yyyy")}.`,
+    });
+  };
+
   const filteredHymns = allHymns?.filter(hymn => {
     const matchesSearch = hymn.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (hymn.solistaName && hymn.solistaName.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const hymnDate = hymn.createdAt ? format(new Date(hymn.createdAt.seconds * 1000), "yyyy-MM-dd") : "";
+    const hymnDate = hymn.createdAt && hymn.createdAt.seconds 
+      ? format(new Date(hymn.createdAt.seconds * 1000), "yyyy-MM-dd") 
+      : "";
     const matchesDate = filterDate === "" || hymnDate === filterDate;
     
     return matchesSearch && matchesDate;
@@ -266,7 +294,7 @@ export function SolistaSection() {
                   />
                 </div>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input 
                     type="date" 
                     className="pl-9 bg-white"
@@ -294,18 +322,35 @@ export function SolistaSection() {
                             <User className="h-4 w-4 text-primary" /> {hymn.solistaName}
                           </span>
                           <span className="flex items-center gap-1.5">
-                            <Calendar className="h-4 w-4" /> {hymn.createdAt ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "..."}
+                            <CalendarIcon className="h-4 w-4" /> {hymn.createdAt && hymn.createdAt.seconds ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "..."}
                           </span>
                           <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                             {hymn.conjunto}
                           </span>
                         </div>
                       </div>
-                      {hymn.solistaId === user.uid && (
-                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleRemoveHymn(hymn.id)}>
-                          <Trash2 className="h-4 w-4" />
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-primary hover:bg-primary/10"
+                          onClick={() => setSchedulingHymn(hymn)}
+                          title="Agendar no Calendário"
+                        >
+                          <CalendarPlus className="h-4 w-4" />
                         </Button>
-                      )}
+                        {hymn.solistaId === user.uid && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:bg-destructive/10" 
+                            onClick={() => handleRemoveHymn(hymn.id)}
+                            title="Remover Hino"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     {hymn.lyrics && (
                       <div className="mt-6 border-t pt-4">
@@ -328,6 +373,31 @@ export function SolistaSection() {
           </div>
         </div>
       )}
+
+      {/* Diálogo de Agendamento */}
+      <Dialog open={!!schedulingHymn} onOpenChange={() => setSchedulingHymn(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Agendar Hino no Calendário</DialogTitle>
+            <DialogDescription>
+              Escolha uma data para agendar o hino "{schedulingHymn?.title}".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Calendar
+              mode="single"
+              selected={selectedScheduleDate}
+              onSelect={setSelectedScheduleDate}
+              locale={ptBR}
+              className="rounded-md border"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSchedulingHymn(null)}>Cancelar</Button>
+            <Button onClick={handleScheduleHymn} disabled={!selectedScheduleDate}>Salvar no Calendário</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

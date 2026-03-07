@@ -33,6 +33,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Hymn } from "@/lib/types";
 import { suggestHymnsForDate } from "@/ai/flows/suggest-hymns-for-date";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFirestore, addDocumentNonBlocking, useMemoFirebase } from "@/firebase";
+import { collection, serverTimestamp, Timestamp } from "firebase/firestore";
 
 const formSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres."),
@@ -55,6 +57,12 @@ export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd }: HymnSu
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user, isAdmin } = useAuth();
+  const db = useFirestore();
+
+  const calendarColRef = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "calendarEntries");
+  }, [db]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -67,7 +75,17 @@ export function HymnSuggestionModal({ isOpen, onClose, date, onHymnAdd }: HymnSu
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onHymnAdd(values);
+    if (!calendarColRef) return;
+
+    const newEntry = {
+      hymnTitle: values.title,
+      musicUrl: values.musicUrl || "",
+      date: Timestamp.fromDate(date),
+      hymnId: `manual-${Date.now()}`,
+      createdAt: serverTimestamp(),
+    };
+
+    addDocumentNonBlocking(calendarColRef, newEntry);
     form.reset();
     onClose();
     toast({

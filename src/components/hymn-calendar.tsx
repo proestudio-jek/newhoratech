@@ -8,53 +8,66 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Hymn } from "@/lib/types";
-import { Music, PlusCircle, Trash2, CalendarHeart } from "lucide-react";
+import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
+import { collection, query, doc, serverTimestamp, Timestamp } from "firebase/firestore";
+import type { CalendarEntry, Hymn } from "@/lib/types";
+import { Music, PlusCircle, Trash2, CalendarHeart, Loader2 } from "lucide-react";
 import { HymnSuggestionModal } from "./hymn-suggestion-modal";
 import { DayContent as DayPickerDayContent } from "react-day-picker";
 
-const initialHymns: Record<string, Hymn[]> = {
-  [format(new Date(), "yyyy-MM-dd")]: [
-    {
-      id: "1",
-      title: "Santo, Santo, Santo",
-      musicUrl: "/hymns/holy-holy-holy.mp3",
-    },
-  ],
-};
-
 export function HymnCalendar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [hymns, setHymns] = useState<Record<string, Hymn[]>>(initialHymns);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const { user, isAdmin } = useAuth();
+  const db = useFirestore();
+
+  const calendarColRef = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "calendarEntries");
+  }, [db]);
+
+  const calendarQuery = useMemoFirebase(() => {
+    if (!calendarColRef) return null;
+    return query(calendarColRef);
+  }, [calendarColRef]);
+
+  const { data: allEntries, isLoading } = useCollection<CalendarEntry>(calendarQuery);
 
   const selectedDateStr = date ? format(date, "yyyy-MM-dd") : "";
-  const selectedHymns = hymns[selectedDateStr] || [];
+  
+  const selectedHymns = allEntries?.filter(entry => {
+    if (!entry.date) return false;
+    const entryDate = entry.date instanceof Timestamp ? entry.date.toDate() : new Date(entry.date);
+    return format(entryDate, "yyyy-MM-dd") === selectedDateStr;
+  }) || [];
 
   const handleAddHymn = (hymn: Omit<Hymn, "id">) => {
-    if (!date) return;
-    const newHymn = { ...hymn, id: new Date().getTime().toString() };
-    const updatedHymns = { ...hymns };
-    if (!updatedHymns[selectedDateStr]) {
-      updatedHymns[selectedDateStr] = [];
-    }
-    updatedHymns[selectedDateStr].push(newHymn);
-    setHymns(updatedHymns);
+    if (!date || !calendarColRef) return;
+    
+    const newEntry = {
+      hymnTitle: hymn.title,
+      musicUrl: hymn.musicUrl || "",
+      date: Timestamp.fromDate(date),
+      hymnId: `manual-${Date.now()}`,
+      createdAt: serverTimestamp(),
+    };
+
+    addDocumentNonBlocking(calendarColRef, newEntry);
   };
 
-  const handleRemoveHymn = (hymnId: string) => {
-    if (!date) return;
-    const updatedHymns = { ...hymns };
-    updatedHymns[selectedDateStr] = updatedHymns[selectedDateStr].filter(
-      (h) => h.id !== hymnId
-    );
-    if (updatedHymns[selectedDateStr].length === 0) {
-      delete updatedHymns[selectedDateStr];
-    }
-    setHymns(updatedHymns);
+  const handleRemoveHymn = (entryId: string) => {
+    if (!db) return;
+    const docRef = doc(db, "calendarEntries", entryId);
+    deleteDocumentNonBlocking(docRef);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -70,12 +83,15 @@ export function HymnCalendar() {
               components={{
                 DayContent: (props) => {
                   const dateStr = format(props.date, "yyyy-MM-dd");
-                  const hasHymns = hymns[dateStr] && hymns[dateStr].length > 0;
+                  const hasHymns = allEntries?.some(entry => {
+                    const entryDate = entry.date instanceof Timestamp ? entry.date.toDate() : new Date(entry.date);
+                    return format(entryDate, "yyyy-MM-dd") === dateStr;
+                  });
                   return (
                     <div className="relative h-full w-full">
                       <DayPickerDayContent {...props} />
                       {hasHymns && (
-                        <div className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-accent"></div>
+                        <div className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-primary"></div>
                       )}
                     </div>
                   );
@@ -91,7 +107,7 @@ export function HymnCalendar() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarHeart className="text-primary" />
-              <span>
+              <span className="text-lg">
                 {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
               </span>
             </CardTitle>
@@ -102,28 +118,27 @@ export function HymnCalendar() {
                 {selectedHymns.map((hymn) => (
                   <li
                     key={hymn.id}
-                    className="flex items-center justify-between rounded-md border p-3"
+                    className="flex items-center justify-between rounded-md border p-3 bg-muted/20"
                   >
                     <div className="flex items-center gap-3">
-                      {hymn.musicUrl && <Music className="h-5 w-5 text-accent" />}
-                      <span className="font-medium">{hymn.title}</span>
+                      {hymn.musicUrl && <Music className="h-4 w-4 text-primary" />}
+                      <span className="font-medium text-sm">{hymn.hymnTitle}</span>
                     </div>
                     {user && isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                      <button
                         onClick={() => handleRemoveHymn(hymn.id)}
-                        aria-label={`Remover ${hymn.title}`}
+                        className="text-destructive hover:bg-destructive/10 p-1 rounded-md transition-colors"
+                        aria-label={`Remover ${hymn.hymnTitle}`}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     )}
                   </li>
                 ))}
               </ul>
             ) : (
               <div className="text-center text-muted-foreground py-8">
-                <p>Nenhum hino agendado para este dia.</p>
+                <p className="text-sm">Nenhum hino agendado para este dia.</p>
               </div>
             )}
             {user && isAdmin && date && (
