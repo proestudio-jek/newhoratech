@@ -32,7 +32,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
 
   const calendarQuery = useMemoFirebase(() => {
     if (!calendarColRef) return null;
-    // Se houver um conjunto alvo, filtramos por ele
+    // Isolation by conjunto is critical here
     if (targetConjunto) {
       return query(calendarColRef, where("conjunto", "==", targetConjunto));
     }
@@ -79,16 +79,16 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
       <div className="md:col-span-2">
-        <Card>
-          <CardContent className="p-0">
+        <Card className="overflow-hidden">
+          <CardContent className="p-0 sm:p-2">
             <Calendar
               mode="single"
               selected={date}
               onSelect={setDate}
               locale={ptBR}
-              className="w-full"
+              className="w-full flex justify-center"
               components={{
                 DayContent: (props) => {
                   const dateStr = format(props.date, "yyyy-MM-dd");
@@ -97,10 +97,10 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                     return format(entryDate, "yyyy-MM-dd") === dateStr;
                   });
                   return (
-                    <div className="relative h-full w-full">
+                    <div className="relative h-full w-full flex items-center justify-center">
                       <DayPickerDayContent {...props} />
                       {hasHymns && (
-                        <div className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        <div className="absolute bottom-1 h-1 w-1 rounded-full bg-primary"></div>
                       )}
                     </div>
                   );
@@ -113,30 +113,30 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
 
       <div className="md:col-span-1">
         <Card className="sticky top-20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarHeart className="text-primary" />
-              <span className="text-lg">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <CalendarHeart className="h-5 w-5" />
+              <span className="text-base sm:text-lg truncate">
                 {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {selectedHymns.length > 0 ? (
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {selectedHymns.map((hymn) => (
                   <li
                     key={hymn.id}
                     className="flex items-center justify-between rounded-md border p-3 bg-muted/20"
                   >
-                    <div className="flex items-center gap-3">
-                      {hymn.musicUrl && <Music className="h-4 w-4 text-primary" />}
-                      <span className="font-medium text-sm">{hymn.hymnTitle}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {hymn.musicUrl && <Music className="h-3.5 w-3.5 text-primary flex-shrink-0" />}
+                      <span className="font-medium text-xs sm:text-sm truncate">{hymn.hymnTitle}</span>
                     </div>
                     {user && isAdmin && (
                       <button
                         onClick={() => handleRemoveHymn(hymn.id)}
-                        className="text-destructive hover:bg-destructive/10 p-1 rounded-md transition-colors"
+                        className="text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-colors flex-shrink-0"
                         aria-label={`Remover ${hymn.hymnTitle}`}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -146,13 +146,13 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                 ))}
               </ul>
             ) : (
-              <div className="text-center text-muted-foreground py-8">
-                <p className="text-sm">Nenhum hino agendado para este dia.</p>
+              <div className="text-center text-muted-foreground py-10 px-4">
+                <p className="text-xs sm:text-sm">Nenhum hino agendado para este dia.</p>
               </div>
             )}
             {user && isAdmin && date && (
               <Button
-                className="w-full"
+                className="w-full text-xs sm:text-sm"
                 onClick={() => setIsModalOpen(true)}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />

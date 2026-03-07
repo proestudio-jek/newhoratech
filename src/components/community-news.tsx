@@ -29,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, Newspaper, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { NewsArticle } from "@/lib/types";
-import { collection, query, orderBy, serverTimestamp, doc, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, serverTimestamp, doc, Timestamp, where } from "firebase/firestore";
 import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
 
 const formSchema = z.object({
@@ -37,7 +37,11 @@ const formSchema = z.object({
   content: z.string().min(10, "A notícia deve ter pelo menos 10 caracteres."),
 });
 
-export function CommunityNews() {
+interface CommunityNewsProps {
+  targetConjunto: string;
+}
+
+export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
   const { user, isAdmin } = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
@@ -50,8 +54,12 @@ export function CommunityNews() {
   
   const newsQuery = useMemoFirebase(() => {
     if (!newsCollectionRef) return null;
-    return query(newsCollectionRef, orderBy("date", "desc"));
-  }, [newsCollectionRef]);
+    return query(
+      newsCollectionRef, 
+      where("conjunto", "==", targetConjunto),
+      orderBy("date", "desc")
+    );
+  }, [newsCollectionRef, targetConjunto]);
 
   const { data: articles, isLoading } = useCollection<NewsArticle>(newsQuery);
 
@@ -71,6 +79,7 @@ export function CommunityNews() {
       content: values.content,
       date: serverTimestamp(),
       authorId: user.uid,
+      conjunto: targetConjunto,
     };
 
     addDocumentNonBlocking(newsCollectionRef, newArticleData);
@@ -78,7 +87,7 @@ export function CommunityNews() {
     setIsAdding(false);
     toast({
         title: "Notícia Publicada!",
-        description: `O artigo "${values.title}" foi publicado.`,
+        description: `O artigo "${values.title}" foi publicado em ${targetConjunto}.`,
     });
   }
   
@@ -94,12 +103,8 @@ export function CommunityNews() {
 
   if (isLoading) {
     return (
-        <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
-            <div className="text-center text-muted-foreground">
-                <Loader2 className="mx-auto h-12 w-12 animate-spin mb-4"/>
-                <h2 className="text-2xl font-semibold">Carregando Notícias...</h2>
-                <p>Buscando as últimas novidades no banco de dados.</p>
-            </div>
+        <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
     )
   }
@@ -110,7 +115,7 @@ export function CommunityNews() {
             <div className="flex justify-end">
                 {!isAdding ? (
                     <Button onClick={() => setIsAdding(true)}>
-                        <PlusCircle className="mr-2"/>
+                        <PlusCircle className="mr-2 h-4 w-4"/>
                         Adicionar Notícia
                     </Button>
                 ) : (
@@ -118,7 +123,7 @@ export function CommunityNews() {
                         <CardHeader>
                             <CardTitle>Publicar Nova Notícia</CardTitle>
                             <CardDescription>
-                            Escreva e publique uma nova notícia para o conjunto.
+                            Escreva e publique uma nova notícia para o conjunto {targetConjunto}.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -150,7 +155,7 @@ export function CommunityNews() {
                                     </FormItem>
                                 )}
                                 />
-                                <div className="flex justify-end gap-2">
+                                <div className="flex flex-col sm:flex-row justify-end gap-2">
                                     <Button type="button" variant="ghost" onClick={() => setIsAdding(false)}>Cancelar</Button>
                                     <Button type="submit">Publicar</Button>
                                 </div>
@@ -165,7 +170,6 @@ export function CommunityNews() {
       {articles && articles.length > 0 ? (
         <div className="space-y-6">
           {articles.map((article) => {
-            // Conversão segura de Timestamp do Firestore para Date do JS
             const articleDate = article.date instanceof Timestamp 
               ? article.date.toDate() 
               : article.date 
@@ -177,13 +181,13 @@ export function CommunityNews() {
             return (
               <Card key={article.id} className="group relative">
                 <CardHeader>
-                  <CardTitle>{article.title}</CardTitle>
+                  <CardTitle className="text-xl sm:text-2xl">{article.title}</CardTitle>
                   <CardDescription>
                     Publicado em {isDateValid ? format(articleDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Data pendente'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="whitespace-pre-wrap">{article.content}</p>
+                  <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed">{article.content}</p>
                 </CardContent>
                 {user && isAdmin && (
                   <Button
@@ -191,7 +195,7 @@ export function CommunityNews() {
                       size="icon"
                       onClick={() => handleRemoveArticle(article.id)}
                       aria-label={`Remover Notícia`}
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   >
                       <Trash2 className="h-4 w-4" />
                   </Button>
@@ -201,11 +205,11 @@ export function CommunityNews() {
           })}
         </div>
       ) : (
-        <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
-            <div className="text-center text-muted-foreground">
-                <Newspaper className="mx-auto h-12 w-12 mb-4"/>
-                <h2 className="text-2xl font-semibold">Nenhuma Notícia Publicada</h2>
-                {isAdmin ? <p>Adicione a primeira notícia no botão acima.</p> : <p>O administrador ainda não publicou notícias nesta seção.</p>}
+        <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed">
+            <div className="text-center text-muted-foreground p-4">
+                <Newspaper className="mx-auto h-12 w-12 mb-4 opacity-20"/>
+                <h2 className="text-xl font-semibold">Nenhuma Notícia Publicada</h2>
+                {isAdmin ? <p className="text-sm">Adicione a primeira notícia no botão acima.</p> : <p className="text-sm">Ainda não há notícias para este conjunto.</p>}
             </div>
         </div>
       )}

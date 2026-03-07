@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, Youtube, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CommunityVideo } from "@/lib/types";
-import { collection, query, orderBy, doc, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, doc, serverTimestamp, where } from "firebase/firestore";
 import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
 
 const formSchema = z.object({
@@ -40,7 +40,11 @@ function getYoutubeId(url: string) {
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
-export function CommunityVideos() {
+interface CommunityVideosProps {
+  targetConjunto: string;
+}
+
+export function CommunityVideos({ targetConjunto }: CommunityVideosProps) {
   const { user, isAdmin } = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
@@ -52,8 +56,12 @@ export function CommunityVideos() {
 
   const videosQuery = useMemoFirebase(() => {
     if(!videosCollectionRef) return null;
-    return query(videosCollectionRef, orderBy("createdAt", "desc"));
-  }, [videosCollectionRef]);
+    return query(
+      videosCollectionRef, 
+      where("conjunto", "==", targetConjunto),
+      orderBy("createdAt", "desc")
+    );
+  }, [videosCollectionRef, targetConjunto]);
 
   const { data: videos, isLoading } = useCollection<CommunityVideo>(videosQuery);
 
@@ -84,13 +92,14 @@ export function CommunityVideos() {
       title: values.title,
       createdAt: serverTimestamp(),
       addedBy: user.uid,
+      conjunto: targetConjunto,
     };
     
     addDocumentNonBlocking(videosCollectionRef, newVideoData);
     form.reset();
     toast({
         title: "Vídeo Adicionado!",
-        description: "O vídeo do YouTube foi adicionado à galeria.",
+        description: `O vídeo foi adicionado à galeria do conjunto ${targetConjunto}.`,
     });
   }
 
@@ -106,11 +115,8 @@ export function CommunityVideos() {
 
   if (isLoading) {
     return (
-        <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
-            <div className="text-center text-muted-foreground">
-                <Loader2 className="mx-auto h-12 w-12 animate-spin mb-4"/>
-                <h2 className="text-2xl font-semibold">Carregando Vídeos...</h2>
-            </div>
+        <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
     );
   }
@@ -120,10 +126,9 @@ export function CommunityVideos() {
       {user && isAdmin && (
         <Card>
           <CardHeader>
-            <CardTitle>Adicionar Novo Vídeo</CardTitle>
+            <CardTitle>Adicionar Vídeo - {targetConjunto}</CardTitle>
             <CardDescription>
-              Cole a URL de um vídeo do YouTube para adicioná-lo à galeria da
-              comunidade.
+              Cole a URL do YouTube para compartilhar um momento deste conjunto.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -136,7 +141,7 @@ export function CommunityVideos() {
                     <FormItem>
                       <FormLabel>Título do Vídeo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Coro Magnificat em Performance" {...field} />
+                        <Input placeholder="Ex: Apresentação Especial" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -156,8 +161,8 @@ export function CommunityVideos() {
                   )}
                 />
                 <div className="flex justify-end">
-                    <Button type="submit">
-                        <PlusCircle className="mr-2" /> Adicionar Vídeo
+                    <Button type="submit" className="w-full sm:w-auto">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Vídeo
                     </Button>
                 </div>
               </form>
@@ -169,8 +174,8 @@ export function CommunityVideos() {
       {videos && videos.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {videos.map((video) => (
-            <Card key={video.id} className="group relative">
-              <div className="aspect-video overflow-hidden rounded-t-lg">
+            <Card key={video.id} className="group relative overflow-hidden">
+              <div className="aspect-video overflow-hidden">
                 <iframe
                   src={`https://www.youtube.com/embed/${video.youtubeId}`}
                   title="YouTube video player"
@@ -181,7 +186,10 @@ export function CommunityVideos() {
                 ></iframe>
               </div>
               <CardContent className="p-4">
-                 <h3 className="font-semibold text-lg flex items-center gap-2 truncate"> <Youtube className="text-red-500 flex-shrink-0"/> {video.title}</h3>
+                 <h3 className="font-semibold text-base sm:text-lg flex items-center gap-2 truncate"> 
+                   <Youtube className="text-red-500 flex-shrink-0 h-5 w-5"/> 
+                   {video.title}
+                 </h3>
               </CardContent>
               {user && isAdmin && (
                 <Button
@@ -189,7 +197,7 @@ export function CommunityVideos() {
                     size="icon"
                     onClick={() => handleRemoveVideo(video.id)}
                     aria-label={`Remover Vídeo`}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity h-8 w-8"
                 >
                     <Trash2 className="h-4 w-4" />
                 </Button>
@@ -198,11 +206,11 @@ export function CommunityVideos() {
           ))}
         </div>
       ) : (
-        <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
-            <div className="text-center text-muted-foreground">
-                <Youtube className="mx-auto h-12 w-12 mb-4"/>
-                <h2 className="text-2xl font-semibold">Nenhum Vídeo Adicionado</h2>
-                {isAdmin ? <p>Adicione o primeiro vídeo no formulário acima.</p> : <p>O administrador ainda não adicionou vídeos a esta seção.</p>}
+        <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed">
+            <div className="text-center text-muted-foreground p-4">
+                <Youtube className="mx-auto h-12 w-12 mb-4 opacity-20"/>
+                <h2 className="text-xl font-semibold">Nenhum Vídeo</h2>
+                {isAdmin ? <p className="text-sm">Adicione o primeiro vídeo deste conjunto acima.</p> : <p className="text-sm">A galeria de vídeos ainda está vazia.</p>}
             </div>
         </div>
       )}

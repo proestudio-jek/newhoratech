@@ -29,12 +29,14 @@ export type CommunityVideo = {
   id: string;
   youtubeId: string;
   title: string;
+  conjunto: string;
   createdAt: any;
 };
 
 export type PlaylistItem = {
   id: string;
-  title:string;
+  title: string;
+  conjunto: string;
   createdAt: any;
 };
 
@@ -42,6 +44,7 @@ export type NewsArticle = {
   id: string;
   title: string;
   content: string;
+  conjunto: string;
   date: any;
 };
 
