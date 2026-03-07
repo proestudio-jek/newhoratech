@@ -8,7 +8,7 @@ export type Hymn = {
 export type SolistaHymn = {
   id: string;
   title: string;
-  lyrics: string;
+  lyrics?: string;
   solistaId: string;
   solistaName: string;
   conjunto: string;

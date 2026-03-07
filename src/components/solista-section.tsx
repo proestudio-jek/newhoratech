@@ -24,7 +24,7 @@ import Link from "next/link";
 
 const hymnFormSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres."),
-  lyrics: z.string().min(10, "A letra deve ter pelo menos 10 caracteres."),
+  lyrics: z.string().optional(),
 });
 
 const profileFormSchema = z.object({
@@ -87,7 +87,7 @@ export function SolistaSection() {
     
     const newHymn = {
       title: values.title,
-      lyrics: values.lyrics,
+      lyrics: values.lyrics || "",
       solistaId: user.uid,
       solistaName: profile.username || user.email,
       conjunto: profile.conjunto,
@@ -235,9 +235,9 @@ export function SolistaSection() {
                       name="lyrics"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Letra do Hino</FormLabel>
+                          <FormLabel>Letra do Hino (Opcional)</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Cole a letra completa do hino aqui..." rows={8} {...field} />
+                            <Textarea placeholder="Cole a letra completa do hino aqui (se houver)..." rows={8} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -307,12 +307,14 @@ export function SolistaSection() {
                         </Button>
                       )}
                     </div>
-                    <div className="mt-6 border-t pt-4">
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Letra / Repertório</h4>
-                        <div className="text-muted-foreground whitespace-pre-wrap text-sm italic leading-relaxed bg-muted/20 p-4 rounded-lg">
-                          {hymn.lyrics}
-                        </div>
-                    </div>
+                    {hymn.lyrics && (
+                      <div className="mt-6 border-t pt-4">
+                          <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Letra / Repertório</h4>
+                          <div className="text-muted-foreground whitespace-pre-wrap text-sm italic leading-relaxed bg-muted/20 p-4 rounded-lg">
+                            {hymn.lyrics}
+                          </div>
+                      </div>
+                    )}
                 </div>
               </Card>
             ))}
