@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Hymn": {
@@ -42,6 +43,37 @@
         "title",
         "lyrics"
       ]
+    },
+    "SolistaHymn": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SolistaHymn",
+      "type": "object",
+      "description": "Hino postado por um solista específico.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "lyrics": {
+          "type": "string"
+        },
+        "solistaId": {
+          "type": "string"
+        },
+        "solistaName": {
+          "type": "string"
+        },
+        "conjunto": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["title", "solistaId", "solistaName"]
     },
     "CalendarEntry": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -133,31 +165,28 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the application.  Note: Authentication data is handled externally.",
+      "description": "Represents a user of the application.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
+          "type": "string"
         },
         "username": {
-          "type": "string",
-          "description": "The username of the user."
+          "type": "string"
         },
         "email": {
-          "type": "string",
-          "description": "The email address of the user.",
-          "format": "email"
+          "type": "string"
         },
         "role": {
+          "type": "string"
+        },
+        "conjunto": {
           "type": "string",
-          "description": "The role of the user (e.g., admin, user)."
+          "description": "Conjunto ao qual o solista pertence."
         }
       },
       "required": [
         "id",
-        "username",
-        "email",
-        "role"
+        "email"
       ]
     }
   },
@@ -176,11 +205,27 @@
           "schema": {
             "$ref": "#/backend/entities/Hymn"
           },
-          "description": "Stores hymn details.  No denormalized authorization fields.",
+          "description": "Stores hymn details.",
           "params": [
             {
               "name": "hymnId",
               "description": "Unique identifier for the hymn."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/solistaHymns/{hymnId}",
+        "definition": {
+          "entityName": "SolistaHymn",
+          "schema": {
+            "$ref": "#/backend/entities/SolistaHymn"
+          },
+          "description": "Hinos de solistas individuais.",
+          "params": [
+            {
+              "name": "hymnId",
+              "description": "ID do hino."
             }
           ]
         }
@@ -192,7 +237,7 @@
           "schema": {
             "$ref": "#/backend/entities/CalendarEntry"
           },
-          "description": "Associates a hymn with a specific date. Only admins can create/modify. No denormalized authorization fields.",
+          "description": "Associates a hymn with a specific date.",
           "params": [
             {
               "name": "calendarEntryId",
@@ -208,7 +253,7 @@
           "schema": {
             "$ref": "#/backend/entities/Video"
           },
-          "description": "Stores video details for the video gallery. No denormalized authorization fields.",
+          "description": "Stores video details for the video gallery.",
           "params": [
             {
               "name": "videoId",
@@ -224,7 +269,7 @@
           "schema": {
             "$ref": "#/backend/entities/Image"
           },
-          "description": "Stores image details for the image carousel. No denormalized authorization fields.",
+          "description": "Stores image details for the image carousel.",
           "params": [
             {
               "name": "imageId",
@@ -240,7 +285,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile data. Path-based ownership.",
+          "description": "Stores user profile data.",
           "params": [
             {
               "name": "userId",
@@ -249,7 +294,6 @@
           ]
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to support the 'Semente da Fé' application, focusing on hymns, a calendar of hymns, videos, and images. User roles (admin/user) are implemented to control access, specifically for hymn management in the calendar. This design prioritizes authorization independence, clarity, and security.\n\n**Authorization Independence (Denormalization):**\n\n*   **CalendarEntry:** The `CalendarEntry` collection includes a denormalized `hymnId` field.  While this *is* a foreign key, it is simply data and not authorization context. Authorization is based on the user's role which is enforced by security rules (admins can edit, users can only view). Therefore, authorization is independent of parent documents or other data lookups.\n\n**Structural Segregation:**\n\n*   `/calendarEntries`:  Calendar entries, linking dates to hymn IDs, are stored in a separate collection.  The logic to determine the current day's hymn lives in the application, not in database queries. The security rules ensure that only admins can modify entries.\n*   `/hymns`: Hymn data is stored in its own collection.\n*   `/videos`: Video gallery content is stored in its own collection.\n*   `/images`: Images for the carousel are stored in their own collection.\n*   `/users`: User profile data is stored with path-based ownership, using the `uid` as the document ID.\n\n**Access Modeling:**\n\n*   **Path-Based Ownership:** User data in `/users/{userId}` is secured using path-based ownership. Only the user (or an admin) can modify their own data.\n*   **Role-Based Access Control:**  Admin privileges for managing calendar entries are determined by the `role` field in the `/users/{userId}` document. Security rules check this role before allowing write operations to the `/calendarEntries` collection.\n\n**QAPs (Rules Are Not Filters):**\n\nThe segregation of data into separate collections based on their access needs (e.g., hymns, videos, images, calendar entries) allows for straightforward security rules that do not require filtering. List operations are secure because rules can easily restrict access based on the user's role.  For instance, listing calendar entries does not require filtering based on date; the application handles that. Instead, rules ensure only authorized users can create/modify.\n\n**Invariants:**\n\nThe structure supports invariants by enforcing that only admins can modify calendar entries. The application is responsible for maintaining the integrity of the data (e.g., ensuring valid `hymnId` references when creating calendar entries). Timestamps (if added) would be managed within the documents and protected by security rules to prevent client-side manipulation.\n\nThis structure provides a clear and maintainable foundation for the 'Semente da Fé' application, facilitating secure data access and management while adhering to the core design principles."
+    ]
   }
 }

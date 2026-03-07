@@ -1,7 +1,18 @@
+
 export type Hymn = {
   id: string;
   title: string;
   musicUrl?: string;
+};
+
+export type SolistaHymn = {
+  id: string;
+  title: string;
+  lyrics: string;
+  solistaId: string;
+  solistaName: string;
+  conjunto: string;
+  createdAt: any;
 };
 
 export type CommunityVideo = {
@@ -23,8 +34,12 @@ export type NewsArticle = {
   content: string;
   date: string;
 };
+
 export type UserProfile = {
   id: string;
+  username: string;
   email: string;
+  role: string;
+  conjunto?: string;
   createdAt: any;
-}
+};
