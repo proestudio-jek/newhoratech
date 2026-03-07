@@ -29,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Trash2, Newspaper, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { NewsArticle } from "@/lib/types";
-import { collection, query, orderBy, serverTimestamp, doc } from "firebase/firestore";
+import { collection, query, orderBy, serverTimestamp, doc, Timestamp } from "firebase/firestore";
 import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
 
 const formSchema = z.object({
@@ -118,7 +118,7 @@ export function CommunityNews() {
                         <CardHeader>
                             <CardTitle>Publicar Nova Notícia</CardTitle>
                             <CardDescription>
-                            Escreva e publique uma nova notícia para a comunidade.
+                            Escreva e publique uma nova notícia para o conjunto.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -164,30 +164,41 @@ export function CommunityNews() {
 
       {articles && articles.length > 0 ? (
         <div className="space-y-6">
-          {articles.map((article) => (
-            <Card key={article.id} className="group relative">
-              <CardHeader>
-                <CardTitle>{article.title}</CardTitle>
-                <CardDescription>
-                  Publicado em {article.date ? format(new Date(article.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Data pendente'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="whitespace-pre-wrap">{article.content}</p>
-              </CardContent>
-              {user && isAdmin && (
-                <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => handleRemoveArticle(article.id)}
-                    aria-label={`Remover Notícia`}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </Card>
-          ))}
+          {articles.map((article) => {
+            // Conversão segura de Timestamp do Firestore para Date do JS
+            const articleDate = article.date instanceof Timestamp 
+              ? article.date.toDate() 
+              : article.date 
+                ? new Date(article.date) 
+                : null;
+            
+            const isDateValid = articleDate && !isNaN(articleDate.getTime());
+
+            return (
+              <Card key={article.id} className="group relative">
+                <CardHeader>
+                  <CardTitle>{article.title}</CardTitle>
+                  <CardDescription>
+                    Publicado em {isDateValid ? format(articleDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Data pendente'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="whitespace-pre-wrap">{article.content}</p>
+                </CardContent>
+                {user && isAdmin && (
+                  <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleRemoveArticle(article.id)}
+                      aria-label={`Remover Notícia`}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                      <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <div className="flex items-center justify-center h-96 rounded-lg border-2 border-dashed">
