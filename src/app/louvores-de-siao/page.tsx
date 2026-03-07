@@ -10,7 +10,7 @@ export default function LouvoresDeSiaoPage() {
     value: "solistas",
     label: "Solistas",
     icon: Mic2,
-    content: <SolistaSection />,
+    content: <SolistaSection targetConjunto="Louvores de Sião" />,
   };
 
   return (

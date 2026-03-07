@@ -33,7 +33,11 @@ const profileFormSchema = z.object({
   conjunto: z.string().min(1, "Selecione o conjunto ao qual você pertence."),
 });
 
-export function SolistaSection() {
+interface SolistaSectionProps {
+  targetConjunto?: string;
+}
+
+export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
   const { user } = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
@@ -75,7 +79,7 @@ export function SolistaSection() {
 
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: { username: profile?.username || "", conjunto: profile?.conjunto || "" },
+    defaultValues: { username: profile?.username || "", conjunto: profile?.conjunto || targetConjunto || "" },
   });
 
   const handleUpdateProfile = (values: z.infer<typeof profileFormSchema>) => {
@@ -133,6 +137,7 @@ export function SolistaSection() {
   };
 
   const filteredHymns = allHymns?.filter(hymn => {
+    const matchesConjunto = !targetConjunto || hymn.conjunto === targetConjunto;
     const matchesSearch = hymn.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (hymn.solistaName && hymn.solistaName.toLowerCase().includes(searchTerm.toLowerCase()));
     
@@ -141,7 +146,7 @@ export function SolistaSection() {
       : "";
     const matchesDate = filterDate === "" || hymnDate === filterDate;
     
-    return matchesSearch && matchesDate;
+    return matchesConjunto && matchesSearch && matchesDate;
   });
 
   if (!user) {
@@ -201,7 +206,7 @@ export function SolistaSection() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Seu Conjunto Principal</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value || targetConjunto}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o conjunto" />
@@ -229,7 +234,7 @@ export function SolistaSection() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-2xl font-bold flex items-center gap-2 text-primary">
-              <Music className="h-6 w-6" /> Galeria de Solistas
+              <Music className="h-6 w-6" /> Galeria de Solistas {targetConjunto ? `- ${targetConjunto}` : ""}
             </h2>
             <Button onClick={() => setIsAddingHymn(!isAddingHymn)} variant={isAddingHymn ? "outline" : "default"}>
               {isAddingHymn ? "Fechar Formulário" : <><PlusCircle className="mr-2 h-4 w-4" /> Postar Meu Hino</>}
