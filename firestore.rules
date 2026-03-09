@@ -3,15 +3,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
-    // Forçar implantação: 2024-05-24 22:15
-    // Objetivo: Resolver definitivamente erros de permissão em listagens públicas (auth: null).
+    // Forçar implantação: 2024-05-24 23:55 (Gatilho Manual de Correção)
+    // Objetivo: Resolver definitivamente erros de permissão em listagens públicas para visitantes (auth: null).
     
     function isSignedIn() {
       return request.auth != null;
     }
 
     // Coleções com leitura pública total (para visitantes e usuários logados)
-    // Usamos {id=**} para garantir que listagens de coleções e subcoleções funcionem.
+    // O uso de {id=**} garante que listagens e buscas em coleções funcionem para todos.
     
     match /community-news/{id=**} {
       allow read: if true;
@@ -38,19 +38,19 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
-    // Regras específicas para hinos de solistas (leitura pública, escrita pelo dono)
+    // Regras para hinos de solistas (leitura pública, escrita permitida apenas ao dono)
     match /solistaHymns/{id=**} {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
     }
 
-    // Perfil de usuário (privado ao próprio usuário)
+    // Perfil de usuário (acesso privado ao próprio usuário)
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para qualquer outro caminho não especificado
+    // Bloqueio padrão para segurança
     match /{document=**} {
       allow read, write: if false;
     }
