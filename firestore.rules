@@ -2,52 +2,54 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // FORÇAR IMPLANTAÇÃO: Atualizado em 24/05/2024 às 19:20 para resolver erro de permissão pública persistente.
-    // Esta regra garante que as coleções de conteúdo dos conjuntos sejam visíveis para todos.
+    // REGRAS DE SEGURANÇA - ATUALIZAÇÃO CRÍTICA PARA ACESSO PÚBLICO
+    // Data da atualização: 24 de maio de 2024, 19:55
+    // Objetivo: Garantir que visitantes (auth == null) possam ler conteúdos dos conjuntos.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Coleções de Conteúdo Público (Leitura aberta, Escrita apenas para usuários logados)
+    // Conteúdos Públicos: Leitura permitida para todos (Logados ou Visitantes), 
+    // Escrita restrita apenas para usuários logados.
     
     match /community-news/{id} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
     
     match /community-playlist/{id} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     match /community-videos/{id} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     match /calendarEntries/{id} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
     match /solistaHymns/{id} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
     }
     
     match /hymns/{id} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow get, list: if true;
+      allow create, update, delete: if isSignedIn();
     }
 
-    // Perfis de usuários (Privado: Apenas o dono acessa)
+    // Perfis de usuários: Acesso privado ao próprio usuário
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para qualquer outra tentativa
+    // Bloqueio padrão para segurança máxima
     match /{document=**} {
       allow read, write: if false;
     }
