@@ -2,13 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Forçar implantação: Atualizado em 24/05/2024 às 17:45 para resolver erro de permissão pública.
+    // FORÇAR IMPLANTAÇÃO: Atualizado em 24/05/2024 às 19:20 para resolver erro de permissão pública persistente.
+    // Esta regra garante que as coleções de conteúdo dos conjuntos sejam visíveis para todos.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Regras para coleções de conteúdo público (Leitura para todos, Escrita para usuários logados)
+    // Coleções de Conteúdo Público (Leitura aberta, Escrita apenas para usuários logados)
     
     match /community-news/{id} {
       allow read: if true;
@@ -41,12 +42,12 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
-    // Perfis de usuários (Apenas o próprio dono acessa)
+    // Perfis de usuários (Privado: Apenas o dono acessa)
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para segurança
+    // Bloqueio padrão para qualquer outra tentativa
     match /{document=**} {
       allow read, write: if false;
     }
