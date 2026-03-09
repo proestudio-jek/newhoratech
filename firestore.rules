@@ -3,43 +3,43 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
-    // Forçar implantação: 2025-05-25 10:15 (Gatilho de Correção de Permissão Pública)
-    // Objetivo: Resolver erros de 'Missing or insufficient permissions' em listagens públicas (auth: null).
+    // Forçar implantação: 2025-05-25 11:45 (Gatilho de Correção de Permissão de Listagem)
+    // Objetivo: Resolver definitivamente erros de 'Missing or insufficient permissions' em consultas públicas.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Coleções com leitura pública total para visitantes e usuários logados.
-    // O padrão {id=**} permite acesso recursivo a documentos e listagens.
+    // Coleções com leitura pública permitida para visitantes e usuários logados.
+    // Usando match direto para garantir que o acesso 'list' na coleção funcione corretamente.
     
-    match /community-news/{id=**} {
+    match /community-news/{id} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{id=**} {
+    match /community-playlist/{id} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{id=**} {
+    match /community-videos/{id} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{id=**} {
+    match /calendarEntries/{id} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{id=**} {
+    match /hymns/{id} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
     // Regras para hinos de solistas (leitura pública, escrita permitida apenas ao dono)
-    match /solistaHymns/{id=**} {
+    match /solistaHymns/{id} {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
