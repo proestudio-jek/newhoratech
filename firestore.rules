@@ -2,9 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO ATUALIZADA)
-    // Gatilho de Implantação: 2025-05-26 21:15 (GMT)
-    // Objetivo: Corrigir erros de permissão 'list' em coleções comunitárias para visitantes.
+    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO ATUALIZADA DEFINITIVA)
+    // Gatilho de Implantação: 2025-05-27 11:45 (GMT)
+    // Objetivo: Resolver erros de permissão 'list' (Missing or insufficient permissions) em coleções comunitárias.
     
     function isSignedIn() {
       return request.auth != null;
