@@ -3,15 +3,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
-    // Forçar implantação: 2024-05-24 23:55 (Gatilho Manual de Correção)
-    // Objetivo: Resolver definitivamente erros de permissão em listagens públicas para visitantes (auth: null).
+    // Forçar implantação: 2025-05-25 10:15 (Gatilho de Correção de Permissão Pública)
+    // Objetivo: Resolver erros de 'Missing or insufficient permissions' em listagens públicas (auth: null).
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Coleções com leitura pública total (para visitantes e usuários logados)
-    // O uso de {id=**} garante que listagens e buscas em coleções funcionem para todos.
+    // Coleções com leitura pública total para visitantes e usuários logados.
+    // O padrão {id=**} permite acesso recursivo a documentos e listagens.
     
     match /community-news/{id=**} {
       allow read: if true;
@@ -50,7 +50,7 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para segurança
+    // Bloqueio padrão para segurança de coleções não mapeadas
     match /{document=**} {
       allow read, write: if false;
     }
