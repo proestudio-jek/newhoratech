@@ -2,14 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Gatilho de implantação: Atualizado em 24/05/2024 para garantir acesso público total de leitura.
+    // Forçar implantação: Atualizado em 24/05/2024 às 16:20 para resolver erro de permissão pública.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Conteúdos públicos dos conjuntos (Notícias, Playlists, Vídeos, Calendário)
-    // Qualquer pessoa pode ler (get/list), mas apenas usuários logados podem escrever.
+    // Regras para coleções de conteúdo público (Leitura para todos, Escrita para logados)
     
     match /community-news/{id} {
       allow read: if true;
@@ -31,26 +30,23 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
-    // Galeria de hinos dos solistas
     match /solistaHymns/{id} {
       allow read: if true;
       allow create: if isSignedIn();
-      // Apenas o dono do hino pode editar ou excluir
       allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
     }
     
-    // Hinos base do sistema
     match /hymns/{id} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    // Perfis de usuários
+    // Perfis de usuários (Apenas o próprio dono acessa)
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para qualquer outra coleção não especificada
+    // Bloqueio padrão para segurança
     match /{document=**} {
       allow read, write: if false;
     }
