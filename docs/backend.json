@@ -8,33 +8,26 @@
       "description": "Represents a hymn with its associated details.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the Hymn entity."
+          "type": "string"
         },
         "title": {
-          "type": "string",
-          "description": "The title of the hymn."
+          "type": "string"
         },
         "author": {
-          "type": "string",
-          "description": "The author of the hymn."
+          "type": "string"
         },
         "lyrics": {
-          "type": "string",
-          "description": "The lyrics of the hymn."
+          "type": "string"
         },
         "tune": {
-          "type": "string",
-          "description": "The tune or melody associated with the hymn."
+          "type": "string"
         },
         "audioUrl": {
           "type": "string",
-          "description": "URL of the audio file for the hymn.",
           "format": "uri"
         },
         "videoUrl": {
           "type": "string",
-          "description": "URL of the video associated with the hymn.",
           "format": "uri"
         }
       },
@@ -79,87 +72,60 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "CalendarEntry",
       "type": "object",
-      "description": "Represents a calendar entry that associates a hymn with a specific date.",
+      "description": "Represents a calendar entry associated with a hymn and a conjunto.",
       "properties": {
         "id": {
-          "type": "string",
-          "description": "Unique identifier for the CalendarEntry entity."
+          "type": "string"
         },
         "date": {
           "type": "string",
-          "description": "The date for which the hymn is assigned.",
           "format": "date-time"
         },
         "hymnId": {
-          "type": "string",
-          "description": "Reference to Hymn. (Relationship: CalendarEntry 1:1 Hymn)"
+          "type": "string"
+        },
+        "hymnTitle": {
+          "type": "string"
+        },
+        "conjunto": {
+          "type": "string"
         }
       },
       "required": [
         "id",
         "date",
-        "hymnId"
+        "hymnTitle",
+        "conjunto"
       ]
     },
-    "Video": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Video",
+    "NewsArticle": {
+      "title": "NewsArticle",
       "type": "object",
-      "description": "Represents a video in the video gallery.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Video entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title of the video."
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description of the video."
-        },
-        "url": {
-          "type": "string",
-          "description": "The URL of the video.",
-          "format": "uri"
-        },
-        "thumbnailUrl": {
-          "type": "string",
-          "description": "The URL of the video thumbnail.",
-          "format": "uri"
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "url"
-      ]
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "conjunto": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      }
     },
-    "Image": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Image",
+    "CommunityVideo": {
+      "title": "CommunityVideo",
       "type": "object",
-      "description": "Represents an image to be displayed in the image carousel.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Image entity."
-        },
-        "title": {
-          "type": "string",
-          "description": "The title or caption for the image."
-        },
-        "url": {
-          "type": "string",
-          "description": "The URL of the image.",
-          "format": "uri"
-        }
-      },
-      "required": [
-        "id",
-        "url"
-      ]
+        "youtubeId": { "type": "string" },
+        "title": { "type": "string" },
+        "conjunto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "PlaylistItem": {
+      "title": "PlaylistItem",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "conjunto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -167,22 +133,10 @@
       "type": "object",
       "description": "Represents a user of the application.",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "username": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string"
-        },
-        "conjunto": {
-          "type": "string",
-          "description": "Conjunto ao qual o solista pertence."
-        }
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "conjunto": { "type": "string" }
       },
       "required": [
         "id",
@@ -192,8 +146,7 @@
   },
   "auth": {
     "providers": [
-      "password",
-      "anonymous"
+      "password"
     ]
   },
   "firestore": {
@@ -202,96 +155,56 @@
         "path": "/hymns/{hymnId}",
         "definition": {
           "entityName": "Hymn",
-          "schema": {
-            "$ref": "#/backend/entities/Hymn"
-          },
-          "description": "Stores hymn details.",
-          "params": [
-            {
-              "name": "hymnId",
-              "description": "Unique identifier for the hymn."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/Hymn" },
+          "description": "Stores hymn details."
         }
       },
       {
         "path": "/solistaHymns/{hymnId}",
         "definition": {
           "entityName": "SolistaHymn",
-          "schema": {
-            "$ref": "#/backend/entities/SolistaHymn"
-          },
-          "description": "Hinos de solistas individuais.",
-          "params": [
-            {
-              "name": "hymnId",
-              "description": "ID do hino."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/SolistaHymn" },
+          "description": "Hinos de solistas individuais."
         }
       },
       {
         "path": "/calendarEntries/{calendarEntryId}",
         "definition": {
           "entityName": "CalendarEntry",
-          "schema": {
-            "$ref": "#/backend/entities/CalendarEntry"
-          },
-          "description": "Associates a hymn with a specific date.",
-          "params": [
-            {
-              "name": "calendarEntryId",
-              "description": "Unique identifier for the calendar entry."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/CalendarEntry" },
+          "description": "Associates a hymn with a specific date and conjunto."
         }
       },
       {
-        "path": "/videos/{videoId}",
+        "path": "/community-news/{newsId}",
         "definition": {
-          "entityName": "Video",
-          "schema": {
-            "$ref": "#/backend/entities/Video"
-          },
-          "description": "Stores video details for the video gallery.",
-          "params": [
-            {
-              "name": "videoId",
-              "description": "Unique identifier for the video."
-            }
-          ]
+          "entityName": "NewsArticle",
+          "schema": { "$ref": "#/backend/entities/NewsArticle" },
+          "description": "Notícias específicas de cada conjunto."
         }
       },
       {
-        "path": "/images/{imageId}",
+        "path": "/community-videos/{videoId}",
         "definition": {
-          "entityName": "Image",
-          "schema": {
-            "$ref": "#/backend/entities/Image"
-          },
-          "description": "Stores image details for the image carousel.",
-          "params": [
-            {
-              "name": "imageId",
-              "description": "Unique identifier for the image."
-            }
-          ]
+          "entityName": "CommunityVideo",
+          "schema": { "$ref": "#/backend/entities/CommunityVideo" },
+          "description": "Vídeos da galeria de cada conjunto."
+        }
+      },
+      {
+        "path": "/community-playlist/{playlistId}",
+        "definition": {
+          "entityName": "PlaylistItem",
+          "schema": { "$ref": "#/backend/entities/PlaylistItem" },
+          "description": "Itens de playlist de cada conjunto."
         }
       },
       {
         "path": "/users/{userId}",
         "definition": {
           "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile data.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Unique identifier for the user (Firebase UID)."
-            }
-          ]
+          "schema": { "$ref": "#/backend/entities/User" },
+          "description": "Stores user profile data."
         }
       }
     ]

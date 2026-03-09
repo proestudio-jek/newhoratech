@@ -9,7 +9,7 @@ service cloud.firestore {
     }
 
     // Permite leitura pública para conteúdos dos conjuntos
-    // Permite escrita para qualquer usuário autenticado (gerenciada via UI isAdmin)
+    // Qualquer visitante pode ler, mas apenas usuários logados podem postar
     
     match /community-news/{id} {
       allow read: if true;
@@ -54,12 +54,12 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
-    // Perfis de usuários
+    // Perfis de usuários (privado para o próprio usuário)
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueia qualquer outro acesso por padrão
+    // Bloqueia qualquer outro acesso não especificado por padrão
     match /{document=**} {
       allow read, write: if false;
     }
