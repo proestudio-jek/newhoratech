@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -29,7 +28,7 @@ import {
   Music2,
 } from "lucide-react";
 import { Button } from "./ui/button";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -128,7 +127,7 @@ function SiteHeader() {
   const { user, logout, isAdmin, setIsAdmin } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
-  const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
 
   // Hide header on auth pages
@@ -244,6 +243,12 @@ function SiteHeader() {
 
 function SiteFooter() {
   const pathname = usePathname();
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   if (pathname === '/login' || pathname === '/signup') {
     return null;
   }
@@ -283,7 +288,7 @@ function SiteFooter() {
       </div>
       <div className="border-t bg-muted/30">
         <div className="container py-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} PROMUSIC. Todos os direitos reservados.
+          © {year} PROMUSIC. Todos os direitos reservados.
         </div>
       </div>
     </footer>

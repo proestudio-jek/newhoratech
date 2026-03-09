@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,10 +19,15 @@ interface HymnCalendarProps {
 }
 
 export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, isAdmin } = useAuth();
   const db = useFirestore();
+
+  // Fix hydration mismatch by setting initial date on mount
+  useEffect(() => {
+    setDate(new Date());
+  }, []);
 
   const calendarColRef = useMemoFirebase(() => {
     if (!db) return null;
@@ -32,7 +36,6 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
 
   const calendarQuery = useMemoFirebase(() => {
     if (!calendarColRef) return null;
-    // Isolation by conjunto is critical here
     if (targetConjunto) {
       return query(calendarColRef, where("conjunto", "==", targetConjunto));
     }
