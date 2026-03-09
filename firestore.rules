@@ -3,37 +3,36 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
-    // Forçar implantação: 2025-05-25 21:15 (Resolução definitiva de erros de listagem pública)
-    // Objetivo: Garantir que visitantes (auth == null) possam listar e ler conteúdos públicos.
+    // Forçar implantação: 2025-05-25 23:30 (Correção definitiva de permissão de listagem pública)
+    // Objetivo: Garantir que visitantes e usuários logados possam ler conteúdos públicos sem restrição.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
     // Coleções de conteúdo público (Leitura para todos, Escrita para usuários logados)
-    // O uso de {document=**} garante que permissões de listagem (list) e leitura (get) sejam herdadas recursivamente.
     
-    match /community-news/{document=**} {
+    match /community-news/{newsId} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{document=**} {
+    match /community-playlist/{playlistId} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{document=**} {
+    match /community-videos/{videoId} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{document=**} {
+    match /calendarEntries/{entryId} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{document=**} {
+    match /hymns/{hymnId} {
       allow read: if true;
       allow write: if isSignedIn();
     }
@@ -43,9 +42,6 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
-    }
-    match /solistaHymns/{allPaths=**} {
-      allow read: if true;
     }
 
     // Perfil de usuário (Acesso estritamente privado)
