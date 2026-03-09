@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Forçar implantação: Atualizado em 24/05/2024 às 16:45 para garantir acesso público de leitura.
+    // Forçar implantação: Atualizado em 24/05/2024 às 17:45 para resolver erro de permissão pública.
     
     function isSignedIn() {
       return request.auth != null;
