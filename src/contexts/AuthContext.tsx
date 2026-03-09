@@ -1,4 +1,3 @@
-
 "use client";
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
@@ -14,7 +13,6 @@ import {
 import { doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth as useFirebaseAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
-import type { UserProfile } from "@/lib/types";
 
 type User = {
   uid: string;
@@ -40,15 +38,13 @@ const AUTH_ERROR_MAP: Record<string, string> = {
     'auth/user-not-found': 'Nenhum usuário encontrado com este e-mail.',
     'auth/wrong-password': 'A senha está incorreta.',
     'auth/email-already-in-use': 'Este e-mail já está em uso por outra conta.',
-    'auth/weak-password': 'A senha é muito fraca. Tente uma mais forte.',
-    'auth/operation-not-allowed': 'Operação não permitida. Verifique se o provedor de E-mail/Senha está ativado no Console do Firebase.',
-    'auth/configuration-not-found': 'Erro de configuração do Firebase. Verifique suas credenciais.',
-    'auth/api-key-not-valid': 'Chave de API do Firebase inválida.',
-    'auth/invalid-credential': 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.',
+    'auth/weak-password': 'A senha é muito fraca (mínimo 6 caracteres).',
+    'auth/operation-not-allowed': 'Configuração de autenticação pendente no console.',
+    'auth/invalid-credential': 'Dados incorretos. Verifique e tente novamente.',
 };
 
 const getFriendlyAuthErrorMessage = (errorCode: string) => {
-    return AUTH_ERROR_MAP[errorCode] || 'Ocorreu um erro inesperado. Tente novamente.';
+    return AUTH_ERROR_MAP[errorCode] || 'Ocorreu um erro na autenticação. Tente novamente.';
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -81,23 +77,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [auth, router, pathname]);
 
   const handleAuthError = (error: AuthError) => {
-    // Erros de autenticação são tratados aqui. 
-    // Erros de permissão do Firestore são tratados pelo FirebaseErrorListener.
     toast({
         variant: "destructive",
-        title: "Erro de Autenticação",
+        title: "Aviso",
         description: getFriendlyAuthErrorMessage(error.code),
     });
   }
 
-  const login = async (email: string, password: string):Promise<void> => {
+  const login = async (email: string, password: string): Promise<void> => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/");
       toast({
-        title: "Login bem-sucedido!",
-        description: `Bem-vindo de volta, ${email}!`,
+        title: "Login realizado!",
+        description: "Bem-vindo de volta à PROMUSIC.",
       });
     } catch (error) {
       handleAuthError(error as AuthError);
@@ -112,14 +106,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signOut(auth);
       router.push("/login");
       toast({
-        title: "Logout realizado",
-        description: "Você saiu da sua conta.",
+        title: "Logout concluído",
+        description: "Até a próxima!",
       });
     } catch (error: any) {
        toast({
         variant: "destructive",
         title: "Erro no Logout",
-        description: "Ocorreu um erro ao tentar sair.",
+        description: "Não foi possível sair no momento.",
       });
     } finally {
         setLoading(false);
@@ -137,13 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: serverTimestamp(),
       };
 
-      // Operação não-bloqueante para criar o perfil do usuário no Firestore
+      // Criação assíncrona do perfil
       setDocumentNonBlocking(doc(db, "users", newUser.uid), userProfile, { merge: true });
       
       router.push("/");
-       toast({
-        title: "Conta criada com sucesso!",
-        description: `Bem-vindo, ${email}!`,
+      toast({
+        title: "Bem-vindo!",
+        description: "Sua conta foi criada com sucesso.",
       });
     } catch (error) {
         handleAuthError(error as AuthError)

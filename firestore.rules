@@ -2,15 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO DEFINITIVA)
-    // Gatilho de Implantação: 2025-05-27 15:30 (GMT)
-    // Objetivo: Permitir leitura pública irrestrita para evitar erros de permissão 'list'.
+    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO ESTÁVEL)
+    // Gatilho de Implantação: 2025-05-27 19:30 (GMT)
+    // Objetivo: Garantir leitura pública total e escrita protegida.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Conteúdos Públicos: Acesso de leitura (get/list) liberado para todos.
+    // Coleções de Conteúdo Público: Leitura (get/list) liberada para todos.
     // Escrita protegida por autenticação.
     
     match /community-news/{id=**} {
@@ -46,12 +46,12 @@ service cloud.firestore {
       );
     }
 
-    // Perfil de usuário: Acesso privado ao próprio dono.
+    // Perfil de usuário: O próprio dono pode ler e escrever.
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Fallback de segurança
+    // Bloqueio padrão
     match /{allPaths=**} {
       allow read, write: if false;
     }
