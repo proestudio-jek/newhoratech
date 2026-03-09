@@ -2,54 +2,56 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
-    // Forçar implantação: 2025-05-25 23:30 (Correção definitiva de permissão de listagem pública)
-    // Objetivo: Garantir que visitantes e usuários logados possam ler conteúdos públicos sem restrição.
+    // REGRAS DE SEGURANÇA - PROMUSIC
+    // Gatilho de Implantação: 2025-05-26 00:30 (GMT)
+    // Objetivo: Resolver erro de listagem (community-videos, community-news, community-playlist)
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Coleções de conteúdo público (Leitura para todos, Escrita para usuários logados)
-    
-    match /community-news/{newsId} {
+    // Permissão de LEITURA pública para coleções de conteúdo da comunidade
+    // O uso de {document=**} garante que a operação de 'list' na coleção e 'get' no documento sejam permitidos.
+    match /community-news/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{playlistId} {
+    match /community-playlist/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{videoId} {
+    match /community-videos/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{entryId} {
+    match /calendarEntries/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{hymnId} {
+    match /hymns/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    // Regras para hinos de solistas (Leitura pública, escrita apenas para o dono do documento)
-    match /solistaHymns/{id} {
+    // Hinos de solistas: Leitura pública, escrita apenas para o autor.
+    match /solistaHymns/{document=**} {
       allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
+      allow update, delete: if isSignedIn() && (
+        resource == null || resource.data.solistaId == request.auth.uid
+      );
     }
 
-    // Perfil de usuário (Acesso estritamente privado)
+    // Perfil de usuário: Acesso restrito ao próprio dono.
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para segurança de coleções não mapeadas
+    // Bloqueio padrão para segurança.
     match /{document=**} {
       allow read, write: if false;
     }
