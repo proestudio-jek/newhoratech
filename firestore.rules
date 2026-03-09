@@ -2,44 +2,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO FINAL)
-    // Gatilho de Implantação: 2025-05-26 16:10 (GMT)
-    // Objetivo: Resolver erros de 'list' e 'get' permitindo leitura pública em coleções comunitárias.
+    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO CORRIGIDA)
+    // Gatilho de Implantação: 2025-05-26 18:30 (GMT)
+    // Objetivo: Permitir leitura e listagem pública para visitantes e usuários logados em coleções comunitárias.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Coleções com LEITURA PÚBLICA TOTAL (Permite 'get' e 'list' para todos, inclusive visitantes)
-    // O seletor {document=**} garante acesso recursivo para listagens de coleções.
+    // Permite leitura pública total (get e list) para conteúdos da comunidade.
+    // O uso de {id=**} garante que consultas de listagem na raiz da coleção sejam permitidas.
     
-    match /community-news/{document=**} {
+    match /community-news/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{document=**} {
+    match /community-playlist/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{document=**} {
+    match /community-videos/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{document=**} {
+    match /calendarEntries/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{document=**} {
+    match /hymns/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
     // Hinos de solistas: Leitura pública, escrita restrita ao autor.
-    match /solistaHymns/{document=**} {
+    match /solistaHymns/{id=**} {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (
@@ -52,7 +52,7 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para segurança.
+    // Bloqueio padrão para qualquer outra coleção não especificada.
     match /{document=**} {
       allow read, write: if false;
     }
