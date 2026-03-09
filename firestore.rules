@@ -2,46 +2,49 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - ATUALIZAÇÃO CRÍTICA PARA ACESSO PÚBLICO
-    // Data da atualização: 24 de maio de 2024, 19:55
-    // Objetivo: Garantir que visitantes (auth == null) possam ler conteúdos dos conjuntos.
+    // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
+    // Forçar implantação: 2024-05-24 20:35
+    // Objetivo: Resolver erro de permissão (Missing or insufficient permissions) para visitantes.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Conteúdos Públicos: Leitura permitida para todos (Logados ou Visitantes), 
-    // Escrita restrita apenas para usuários logados.
-    
+    // Notícias da comunidade: Leitura pública, escrita para usuários logados
     match /community-news/{id} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
     
+    // Playlists: Leitura pública, escrita para usuários logados
     match /community-playlist/{id} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
+    // Vídeos: Leitura pública, escrita para usuários logados
     match /community-videos/{id} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
+    // Calendário: Leitura pública, escrita para usuários logados
     match /calendarEntries/{id} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
+    // Hinos de solistas: Leitura pública, criação para logados, edição para o autor
     match /solistaHymns/{id} {
-      allow get, list: if true;
+      allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
     }
     
+    // Hinos base: Leitura pública, escrita para usuários logados
     match /hymns/{id} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
     // Perfis de usuários: Acesso privado ao próprio usuário
@@ -49,7 +52,7 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para segurança máxima
+    // Bloqueio padrão para segurança máxima em outros caminhos
     match /{document=**} {
       allow read, write: if false;
     }
