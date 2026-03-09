@@ -3,42 +3,42 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA - PROMUSIC
-    // Gatilho de Implantação: 2025-05-26 00:30 (GMT)
-    // Objetivo: Resolver erro de listagem (community-videos, community-news, community-playlist)
+    // Gatilho de Implantação: 2025-05-26 02:15 (GMT)
+    // Objetivo: Resolver erros de 'list' (Missing or insufficient permissions) para visitantes.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Permissão de LEITURA pública para coleções de conteúdo da comunidade
-    // O uso de {document=**} garante que a operação de 'list' na coleção e 'get' no documento sejam permitidos.
-    match /community-news/{document=**} {
+    // Coleções com LEITURA PÚBLICA (Permite 'get' e 'list' para todos)
+    
+    match /community-news/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{document=**} {
+    match /community-playlist/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{document=**} {
+    match /community-videos/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{document=**} {
+    match /calendarEntries/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{document=**} {
+    match /hymns/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    // Hinos de solistas: Leitura pública, escrita apenas para o autor.
-    match /solistaHymns/{document=**} {
+    // Hinos de solistas: Leitura pública, escrita apenas para o autor logado.
+    match /solistaHymns/{id=**} {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (
@@ -51,7 +51,7 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para segurança.
+    // Bloqueio padrão para segurança de coleções não especificadas.
     match /{document=**} {
       allow read, write: if false;
     }
