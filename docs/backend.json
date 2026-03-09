@@ -1,212 +1,108 @@
-
 {
   "entities": {
     "Hymn": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Hymn",
       "type": "object",
-      "description": "Represents a hymn with its associated details.",
+      "description": "Representa um hino no sistema.",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "author": {
-          "type": "string"
-        },
-        "lyrics": {
-          "type": "string"
-        },
-        "tune": {
-          "type": "string"
-        },
-        "audioUrl": {
-          "type": "string",
-          "format": "uri"
-        },
-        "videoUrl": {
-          "type": "string",
-          "format": "uri"
-        }
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "musicUrl": { "type": "string", "format": "uri" }
       },
-      "required": [
-        "id",
-        "title",
-        "lyrics"
-      ]
+      "required": ["title"]
     },
     "SolistaHymn": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "SolistaHymn",
       "type": "object",
       "description": "Hino postado por um solista específico.",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "lyrics": {
-          "type": "string"
-        },
-        "solistaId": {
-          "type": "string"
-        },
-        "solistaName": {
-          "type": "string"
-        },
-        "conjunto": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "lyrics": { "type": "string" },
+        "solistaId": { "type": "string" },
+        "solistaName": { "type": "string" },
+        "conjunto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "solistaId", "solistaName"]
+      "required": ["title", "solistaId", "solistaName", "conjunto"]
     },
     "CalendarEntry": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "CalendarEntry",
       "type": "object",
-      "description": "Represents a calendar entry associated with a hymn and a conjunto.",
+      "description": "Entrada de calendário vinculando um hino a uma data e conjunto.",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "hymnId": {
-          "type": "string"
-        },
-        "hymnTitle": {
-          "type": "string"
-        },
-        "conjunto": {
-          "type": "string"
-        }
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "hymnId": { "type": "string" },
+        "hymnTitle": { "type": "string" },
+        "musicUrl": { "type": "string" },
+        "conjunto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "date",
-        "hymnTitle",
-        "conjunto"
-      ]
+      "required": ["date", "hymnTitle", "conjunto"]
     },
     "NewsArticle": {
       "title": "NewsArticle",
       "type": "object",
+      "description": "Notícia ou aviso de um conjunto.",
       "properties": {
+        "id": { "type": "string" },
         "title": { "type": "string" },
         "content": { "type": "string" },
         "conjunto": { "type": "string" },
         "date": { "type": "string", "format": "date-time" }
-      }
+      },
+      "required": ["title", "content", "conjunto"]
     },
     "CommunityVideo": {
       "title": "CommunityVideo",
       "type": "object",
+      "description": "Vídeo da galeria de um conjunto.",
       "properties": {
+        "id": { "type": "string" },
         "youtubeId": { "type": "string" },
         "title": { "type": "string" },
         "conjunto": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
-      }
+      },
+      "required": ["youtubeId", "title", "conjunto"]
     },
     "PlaylistItem": {
       "title": "PlaylistItem",
       "type": "object",
+      "description": "Item de hino na playlist de um conjunto.",
       "properties": {
+        "id": { "type": "string" },
         "title": { "type": "string" },
         "conjunto": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
-      }
+      },
+      "required": ["title", "conjunto"]
     },
     "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the application.",
+      "description": "Perfil de usuário do sistema.",
       "properties": {
         "id": { "type": "string" },
         "username": { "type": "string" },
         "email": { "type": "string" },
-        "conjunto": { "type": "string" }
+        "conjunto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "email"
-      ]
+      "required": ["email"]
     }
   },
   "auth": {
-    "providers": [
-      "password"
-    ]
+    "providers": ["password"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/hymns/{hymnId}",
-        "definition": {
-          "entityName": "Hymn",
-          "schema": { "$ref": "#/backend/entities/Hymn" },
-          "description": "Stores hymn details."
-        }
-      },
-      {
-        "path": "/solistaHymns/{hymnId}",
-        "definition": {
-          "entityName": "SolistaHymn",
-          "schema": { "$ref": "#/backend/entities/SolistaHymn" },
-          "description": "Hinos de solistas individuais."
-        }
-      },
-      {
-        "path": "/calendarEntries/{calendarEntryId}",
-        "definition": {
-          "entityName": "CalendarEntry",
-          "schema": { "$ref": "#/backend/entities/CalendarEntry" },
-          "description": "Associates a hymn with a specific date and conjunto."
-        }
-      },
-      {
-        "path": "/community-news/{newsId}",
-        "definition": {
-          "entityName": "NewsArticle",
-          "schema": { "$ref": "#/backend/entities/NewsArticle" },
-          "description": "Notícias específicas de cada conjunto."
-        }
-      },
-      {
-        "path": "/community-videos/{videoId}",
-        "definition": {
-          "entityName": "CommunityVideo",
-          "schema": { "$ref": "#/backend/entities/CommunityVideo" },
-          "description": "Vídeos da galeria de cada conjunto."
-        }
-      },
-      {
-        "path": "/community-playlist/{playlistId}",
-        "definition": {
-          "entityName": "PlaylistItem",
-          "schema": { "$ref": "#/backend/entities/PlaylistItem" },
-          "description": "Itens de playlist de cada conjunto."
-        }
-      },
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": { "$ref": "#/backend/entities/User" },
-          "description": "Stores user profile data."
-        }
-      }
-    ]
+    "/hymns/{hymnId}": { "schema": { "$ref": "#/backend/entities/Hymn" }, "description": "Hinos base do sistema." },
+    "/solistaHymns/{hymnId}": { "schema": { "$ref": "#/backend/entities/SolistaHymn" }, "description": "Hinos publicados por solistas." },
+    "/calendarEntries/{entryId}": { "schema": { "$ref": "#/backend/entities/CalendarEntry" }, "description": "Hinos agendados no calendário." },
+    "/community-news/{newsId}": { "schema": { "$ref": "#/backend/entities/NewsArticle" }, "description": "Notícias dos conjuntos." },
+    "/community-videos/{videoId}": { "schema": { "$ref": "#/backend/entities/CommunityVideo" }, "description": "Vídeos das galerias dos conjuntos." },
+    "/community-playlist/{playlistId}": { "schema": { "$ref": "#/backend/entities/PlaylistItem" }, "description": "Playlists musicais dos conjuntos." },
+    "/users/{userId}": { "schema": { "$ref": "#/backend/entities/User" }, "description": "Perfis de usuários." }
   }
 }
