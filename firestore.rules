@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
-    // Forçar implantação: 2025-05-25 18:45 (Resolução definitiva de erros de listagem pública)
+    // Forçar implantação: 2025-05-25 21:15 (Resolução definitiva de erros de listagem pública)
     // Objetivo: Garantir que visitantes (auth == null) possam listar e ler conteúdos públicos.
     
     function isSignedIn() {
@@ -11,29 +11,29 @@ service cloud.firestore {
     }
 
     // Coleções de conteúdo público (Leitura para todos, Escrita para usuários logados)
-    // O uso de {id=**} garante que permissões de listagem (list) e leitura (get) sejam herdadas recursivamente.
+    // O uso de {document=**} garante que permissões de listagem (list) e leitura (get) sejam herdadas recursivamente.
     
-    match /community-news/{id=**} {
+    match /community-news/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{id=**} {
+    match /community-playlist/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{id=**} {
+    match /community-videos/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{id=**} {
+    match /calendarEntries/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{id=**} {
+    match /hymns/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
