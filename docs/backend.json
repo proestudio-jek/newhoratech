@@ -82,7 +82,7 @@
     "User": {
       "title": "User",
       "type": "object",
-      "description": "Perfil de usuário do sistema.",
+      "description": "Perfil de usuário.",
       "properties": {
         "id": { "type": "string" },
         "username": { "type": "string" },
@@ -97,12 +97,12 @@
     "providers": ["password"]
   },
   "firestore": {
-    "/hymns/{hymnId}": { "schema": { "$ref": "#/backend/entities/Hymn" }, "description": "Hinos base do sistema." },
-    "/solistaHymns/{hymnId}": { "schema": { "$ref": "#/backend/entities/SolistaHymn" }, "description": "Hinos publicados por solistas." },
-    "/calendarEntries/{entryId}": { "schema": { "$ref": "#/backend/entities/CalendarEntry" }, "description": "Hinos agendados no calendário." },
+    "/hymns/{hymnId}": { "schema": { "$ref": "#/backend/entities/Hymn" }, "description": "Hinos base." },
+    "/solistaHymns/{hymnId}": { "schema": { "$ref": "#/backend/entities/SolistaHymn" }, "description": "Hinos de solistas." },
+    "/calendarEntries/{entryId}": { "schema": { "$ref": "#/backend/entities/CalendarEntry" }, "description": "Entradas do calendário." },
     "/community-news/{newsId}": { "schema": { "$ref": "#/backend/entities/NewsArticle" }, "description": "Notícias dos conjuntos." },
-    "/community-videos/{videoId}": { "schema": { "$ref": "#/backend/entities/CommunityVideo" }, "description": "Vídeos das galerias dos conjuntos." },
-    "/community-playlist/{playlistId}": { "schema": { "$ref": "#/backend/entities/PlaylistItem" }, "description": "Playlists musicais dos conjuntos." },
+    "/community-videos/{videoId}": { "schema": { "$ref": "#/backend/entities/CommunityVideo" }, "description": "Vídeos dos conjuntos." },
+    "/community-playlist/{playlistId}": { "schema": { "$ref": "#/backend/entities/PlaylistItem" }, "description": "Playlists dos conjuntos." },
     "/users/{userId}": { "schema": { "$ref": "#/backend/entities/User" }, "description": "Perfis de usuários." }
   }
 }
