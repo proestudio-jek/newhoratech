@@ -3,57 +3,42 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
-    // Forçar implantação: 2025-05-25 16:15 (Correção de Permissão de Listagem Pública)
-    // Objetivo: Resolver definitivamente erros de 'Missing or insufficient permissions' em consultas públicas.
+    // Forçar implantação: 2025-05-25 18:45 (Resolução definitiva de erros de listagem pública)
+    // Objetivo: Garantir que visitantes (auth == null) possam listar e ler conteúdos públicos.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Permite leitura pública para as coleções de conteúdo (visitantes e logados)
-    // Usamos regras explícitas para a coleção e caminhos recursivos para garantir cobertura total.
+    // Coleções de conteúdo público (Leitura para todos, Escrita para usuários logados)
+    // O uso de {id=**} garante que permissões de listagem (list) e leitura (get) sejam herdadas recursivamente.
     
-    match /community-news/{id} {
+    match /community-news/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
-    }
-    match /community-news/{allPaths=**} {
-      allow read: if true;
     }
     
-    match /community-playlist/{id} {
+    match /community-playlist/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
-    match /community-playlist/{allPaths=**} {
-      allow read: if true;
-    }
 
-    match /community-videos/{id} {
+    match /community-videos/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
-    match /community-videos/{allPaths=**} {
-      allow read: if true;
-    }
 
-    match /calendarEntries/{id} {
+    match /calendarEntries/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
-    match /calendarEntries/{allPaths=**} {
-      allow read: if true;
-    }
 
-    match /hymns/{id} {
+    match /hymns/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
-    match /hymns/{allPaths=**} {
-      allow read: if true;
-    }
 
-    // Regras para hinos de solistas (leitura pública, escrita permitida apenas ao dono)
+    // Regras para hinos de solistas (Leitura pública, escrita apenas para o dono do documento)
     match /solistaHymns/{id} {
       allow read: if true;
       allow create: if isSignedIn();
@@ -63,7 +48,7 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // Perfil de usuário (acesso privado ao próprio usuário)
+    // Perfil de usuário (Acesso estritamente privado)
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
