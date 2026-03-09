@@ -2,14 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Comentário de gatilho: Garantindo acesso público de leitura para as galerias dos conjuntos.
+    // Gatilho de implantação: Atualizado em 24/05/2024 para garantir acesso público total de leitura.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
     // Conteúdos públicos dos conjuntos (Notícias, Playlists, Vídeos, Calendário)
-    // Qualquer pessoa pode ler, mas apenas usuários logados (admins) podem escrever.
+    // Qualquer pessoa pode ler (get/list), mas apenas usuários logados podem escrever.
     
     match /community-news/{id} {
       allow read: if true;
