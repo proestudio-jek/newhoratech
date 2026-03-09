@@ -3,43 +3,43 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA ATUALIZADAS - PROMUSIC
-    // Forçar implantação: 2024-05-24 20:50
-    // Objetivo: Resolver erro de permissão (Missing or insufficient permissions) para visitantes.
+    // Forçar implantação: 2024-05-24 21:20
+    // Objetivo: Garantir leitura pública recursiva para resolver erros de permissão em listagens.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Permitir leitura pública (get e list) para todas as coleções de conteúdo dos conjuntos
-    // e escrita apenas para usuários autenticados.
-
-    match /community-news/{id} {
+    // Conteúdo público dos conjuntos (Notícias, Vídeos, Playlists, Calendário)
+    // Usando {id=**} para garantir que listagens na raiz da coleção funcionem sem erros.
+    
+    match /community-news/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{id} {
+    match /community-playlist/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{id} {
+    match /community-videos/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{id} {
+    match /calendarEntries/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /solistaHymns/{id} {
+    match /solistaHymns/{id=**} {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && request.auth.uid == resource.data.solistaId;
     }
     
-    match /hymns/{id} {
+    match /hymns/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
@@ -48,7 +48,7 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para segurança máxima em outros caminhos
+    // Bloqueio padrão para outros caminhos
     match /{document=**} {
       allow read, write: if false;
     }
