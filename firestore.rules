@@ -2,43 +2,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO CORRIGIDA)
-    // Gatilho de Implantação: 2025-05-26 18:30 (GMT)
-    // Objetivo: Permitir leitura e listagem pública para visitantes e usuários logados em coleções comunitárias.
+    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO ATUALIZADA)
+    // Gatilho de Implantação: 2025-05-26 21:15 (GMT)
+    // Objetivo: Corrigir erros de permissão 'list' em coleções comunitárias para visitantes.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Permite leitura pública total (get e list) para conteúdos da comunidade.
-    // O uso de {id=**} garante que consultas de listagem na raiz da coleção sejam permitidas.
+    // Conteúdos Comunitários: Leitura (get/list) pública irrestrita.
+    // Escrita (create/update/delete) exige estar logado.
     
-    match /community-news/{id=**} {
+    match /community-news/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{id=**} {
+    match /community-playlist/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{id=**} {
+    match /community-videos/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{id=**} {
+    match /calendarEntries/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{id=**} {
+    match /hymns/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    // Hinos de solistas: Leitura pública, escrita restrita ao autor.
+    // Hinos de solistas: Leitura pública, escrita restrita ao autor logado.
     match /solistaHymns/{id=**} {
       allow read: if true;
       allow create: if isSignedIn();
@@ -52,8 +52,8 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para qualquer outra coleção não especificada.
-    match /{document=**} {
+    // Bloqueio padrão para qualquer outra coleção não mapeada explicitamente.
+    match /{allPaths=**} {
       allow read, write: if false;
     }
   }
