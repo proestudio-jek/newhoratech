@@ -3,42 +3,43 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // REGRAS DE SEGURANÇA - PROMUSIC
-    // Gatilho de Implantação: 2025-05-26 02:15 (GMT)
-    // Objetivo: Resolver erros de 'list' (Missing or insufficient permissions) para visitantes.
+    // Gatilho de Implantação: 2025-05-26 15:45 (GMT)
+    // Objetivo: Resolver definitivamente erros de 'list' e 'get' para visitantes e usuários logados.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
     // Coleções com LEITURA PÚBLICA (Permite 'get' e 'list' para todos)
+    // O uso de {document=**} garante que subcoleções e listagens sejam permitidas.
     
-    match /community-news/{id=**} {
+    match /community-news/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{id=**} {
+    match /community-playlist/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{id=**} {
+    match /community-videos/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{id=**} {
+    match /calendarEntries/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{id=**} {
+    match /hymns/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
     // Hinos de solistas: Leitura pública, escrita apenas para o autor logado.
-    match /solistaHymns/{id=**} {
+    match /solistaHymns/{document=**} {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (
