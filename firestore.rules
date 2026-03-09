@@ -2,9 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO ATUALIZADA DEFINITIVA)
-    // Gatilho de Implantação: 2025-05-27 11:45 (GMT)
-    // Objetivo: Resolver erros de permissão 'list' (Missing or insufficient permissions) em coleções comunitárias.
+    // REGRAS DE SEGURANÇA - PROMUSIC (VERSão CORRIGIDA)
+    // Gatilho de Implantação: 2025-05-27 12:30 (GMT)
+    // Objetivo: Resolver definitivamente erros de permissão 'list' em coleções comunitárias.
     
     function isSignedIn() {
       return request.auth != null;
@@ -13,27 +13,27 @@ service cloud.firestore {
     // Conteúdos Comunitários: Leitura (get/list) pública irrestrita.
     // Escrita (create/update/delete) exige estar logado.
     
-    match /community-news/{document=**} {
+    match /community-news/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /community-playlist/{document=**} {
+    match /community-playlist/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /community-videos/{document=**} {
+    match /community-videos/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /calendarEntries/{document=**} {
+    match /calendarEntries/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
-    match /hymns/{document=**} {
+    match /hymns/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
