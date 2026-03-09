@@ -2,16 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - PROMUSIC (VERSão CORRIGIDA)
-    // Gatilho de Implantação: 2025-05-27 12:30 (GMT)
-    // Objetivo: Resolver definitivamente erros de permissão 'list' em coleções comunitárias.
+    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO DEFINITIVA)
+    // Gatilho de Implantação: 2025-05-27 15:30 (GMT)
+    // Objetivo: Permitir leitura pública irrestrita para evitar erros de permissão 'list'.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Conteúdos Comunitários: Leitura (get/list) pública irrestrita.
-    // Escrita (create/update/delete) exige estar logado.
+    // Conteúdos Públicos: Acesso de leitura (get/list) liberado para todos.
+    // Escrita protegida por autenticação.
     
     match /community-news/{id=**} {
       allow read: if true;
@@ -38,7 +38,6 @@ service cloud.firestore {
       allow write: if isSignedIn();
     }
 
-    // Hinos de solistas: Leitura pública, escrita restrita ao autor logado.
     match /solistaHymns/{id=**} {
       allow read: if true;
       allow create: if isSignedIn();
@@ -52,7 +51,7 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    // Bloqueio padrão para qualquer outra coleção não mapeada explicitamente.
+    // Fallback de segurança
     match /{allPaths=**} {
       allow read, write: if false;
     }
