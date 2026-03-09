@@ -2,13 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Forçar implantação: Atualizado em 24/05/2024 às 16:20 para resolver erro de permissão pública.
+    // Forçar implantação: Atualizado em 24/05/2024 às 16:45 para garantir acesso público de leitura.
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Regras para coleções de conteúdo público (Leitura para todos, Escrita para logados)
+    // Regras para coleções de conteúdo público (Leitura para todos, Escrita para usuários logados)
     
     match /community-news/{id} {
       allow read: if true;
