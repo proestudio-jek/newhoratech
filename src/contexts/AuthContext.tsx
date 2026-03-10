@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
@@ -14,6 +15,8 @@ import { doc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth as useFirebaseAuth, useFirestore, setDocumentNonBlocking } from "@/firebase";
 
+const CENTRAL_ADMIN_EMAIL = "jeffersonnascimentoone@outlook.com";
+
 type User = {
   uid: string;
   email: string | null;
@@ -23,6 +26,7 @@ type AuthContextType = {
   user: User | null;
   isAdmin: boolean;
   setIsAdmin: (isAdmin: boolean) => void;
+  isCentralAdmin: boolean;
   login: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   signup: (email: string, pass: string) => Promise<void>;
@@ -59,12 +63,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { toast } = useToast();
 
+  const isCentralAdmin = user?.email === CENTRAL_ADMIN_EMAIL;
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      setUser(firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null);
+      const newUser = firebaseUser ? { uid: firebaseUser.uid, email: firebaseUser.email } : null;
+      setUser(newUser);
       setInitialLoading(false);
       
-      if (!firebaseUser) {
+      // Só permite isAdmin ser verdadeiro se for o e-mail central
+      if (newUser?.email === CENTRAL_ADMIN_EMAIL) {
+        setIsAdmin(true);
+      } else {
         setIsAdmin(false);
       }
 
@@ -129,9 +139,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userProfile = {
         email: newUser.email!,
         createdAt: serverTimestamp(),
+        role: 'user',
+        status: 'pending'
       };
 
-      // Criação assíncrona do perfil
       setDocumentNonBlocking(doc(db, "users", newUser.uid), userProfile, { merge: true });
       
       router.push("/");
@@ -148,8 +159,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = {
     user,
-    isAdmin,
-    setIsAdmin,
+    isAdmin: isCentralAdmin && isAdmin,
+    setIsAdmin: (val: boolean) => isCentralAdmin && setIsAdmin(val),
+    isCentralAdmin,
     login,
     logout,
     signup,

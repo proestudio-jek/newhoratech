@@ -158,7 +158,7 @@ function MainNav({ isMobile, onItemClick, isAdmin }: { isMobile: boolean; onItem
 }
 
 function SiteHeader() {
-  const { user, logout, isAdmin, setIsAdmin } = useAuth();
+  const { user, logout, isAdmin, setIsAdmin, isCentralAdmin } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -172,7 +172,7 @@ function SiteHeader() {
   const handleAdminToggle = (checked: boolean) => {
     if (!user) {
       router.push('/login');
-    } else {
+    } else if (isCentralAdmin) {
       setIsAdmin(checked);
     }
   };
@@ -193,15 +193,17 @@ function SiteHeader() {
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <div className="hidden items-center space-x-2 md:flex border-l border-white/20 pl-4">
-            <Label htmlFor="admin-mode" className="text-[10px] font-bold text-white/80 uppercase tracking-widest">Modo Admin</Label>
-            <Switch
-              id="admin-mode"
-              checked={isAdmin}
-              onCheckedChange={handleAdminToggle}
-              className="data-[state=checked]:bg-white data-[state=unchecked]:bg-blue-400"
-            />
-          </div>
+          {isCentralAdmin && (
+            <div className="hidden items-center space-x-2 md:flex border-l border-white/20 pl-4">
+              <Label htmlFor="admin-mode" className="text-[10px] font-bold text-white/80 uppercase tracking-widest">Modo Admin</Label>
+              <Switch
+                id="admin-mode"
+                checked={isAdmin}
+                onCheckedChange={handleAdminToggle}
+                className="data-[state=checked]:bg-white data-[state=unchecked]:bg-blue-400"
+              />
+            </div>
+          )}
           <div className="hidden md:flex items-center gap-2">
             {user ? (
                 <Button variant="outline" size="sm" onClick={logout} className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent">
@@ -236,14 +238,16 @@ function SiteHeader() {
                     <div className="flex flex-col space-y-3">
                        <MainNav isMobile={true} onItemClick={closeMobileNav} isAdmin={isAdmin} />
                        <div className="flex flex-col space-y-2 pt-6 border-t mt-6">
-                        <div className="flex items-center justify-between px-4 mb-4">
-                            <Label htmlFor="admin-mode-mobile" className="text-sm">Modo Admin</Label>
-                            <Switch
-                            id="admin-mode-mobile"
-                            checked={isAdmin}
-                            onCheckedChange={handleAdminToggle}
-                            />
-                        </div>
+                        {isCentralAdmin && (
+                            <div className="flex items-center justify-between px-4 mb-4">
+                                <Label htmlFor="admin-mode-mobile" className="text-sm">Modo Admin</Label>
+                                <Switch
+                                id="admin-mode-mobile"
+                                checked={isAdmin}
+                                onCheckedChange={handleAdminToggle}
+                                />
+                            </div>
+                        )}
                         {user ? (
                            <>
                             <Button variant="ghost" onClick={() => { logout(); closeMobileNav(); }} className="justify-start">
