@@ -50,7 +50,7 @@ export type NewsArticle = {
 
 export type UserProfile = {
   id: string;
-  username: string;
+  username?: string;
   email: string;
   role: 'user' | 'admin';
   status?: 'pending' | 'approved' | 'rejected';

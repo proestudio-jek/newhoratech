@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PlusCircle, Search, Calendar as CalendarIcon, User, Music, Trash2, Filter, LogIn, CalendarPlus, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { PlusCircle, Search, Calendar as CalendarIcon, User, Music, Trash2, Filter, LogIn, CalendarPlus, Clock, CheckCircle2, XCircle, Edit, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -46,6 +46,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [isAddingHymn, setIsAddingHymn] = useState(false);
+  const [editingHymn, setEditingHymn] = useState<SolistaHymn | null>(null);
   const [schedulingHymn, setSchedulingHymn] = useState<SolistaHymn | null>(null);
   const [selectedScheduleDate, setSelectedScheduleDate] = useState<Date | undefined>(new Date());
 
@@ -78,20 +79,34 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
     defaultValues: { title: "", lyrics: "" },
   });
 
+  const editForm = useForm<z.infer<typeof hymnFormSchema>>({
+    resolver: zodResolver(hymnFormSchema),
+    defaultValues: { title: "", lyrics: "" },
+  });
+
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: { 
-      username: profile?.username || "", 
-      conjunto: profile?.conjunto || targetConjunto || "" 
+      username: "", 
+      conjunto: targetConjunto || "" 
     },
   });
+
+  useEffect(() => {
+    if (profile?.username) {
+        profileForm.setValue("username", profile.username);
+    }
+    if (profile?.conjunto) {
+        profileForm.setValue("conjunto", profile.conjunto);
+    }
+  }, [profile, profileForm]);
 
   const handleUpdateProfile = (values: z.infer<typeof profileFormSchema>) => {
     if (!userRef) return;
     updateDocumentNonBlocking(userRef, {
       username: values.username,
       conjunto: values.conjunto,
-      status: "pending", // Sempre volta para pendente ao atualizar dados críticos
+      status: "pending",
     });
     toast({ 
       title: "Solicitação Enviada!", 
@@ -115,6 +130,25 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
     hymnForm.reset();
     setIsAddingHymn(false);
     toast({ title: "Hino Adicionado!", description: "Seu hino foi publicado e está disponível na galeria." });
+  };
+
+  const handleStartEdit = (hymn: SolistaHymn) => {
+    setEditingHymn(hymn);
+    editForm.reset({
+      title: hymn.title,
+      lyrics: hymn.lyrics || "",
+    });
+  };
+
+  const handleSaveEdit = (values: z.infer<typeof hymnFormSchema>) => {
+    if (!db || !editingHymn) return;
+    const docRef = doc(db, "solistaHymns", editingHymn.id);
+    updateDocumentNonBlocking(docRef, {
+      title: values.title,
+      lyrics: values.lyrics || "",
+    });
+    setEditingHymn(null);
+    toast({ title: "Hino Atualizado", description: "As alterações foram salvas com sucesso." });
   };
 
   const handleRemoveHymn = (id: string) => {
@@ -163,16 +197,21 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
             <User className="h-10 w-10 text-muted-foreground" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold">Acesso aos Solistas</h2>
+            <h2 className="text-2xl font-bold">Portal do Solista</h2>
             <p className="mx-auto max-w-sm text-muted-foreground">
-              Para ver os hinos dos solistas ou postar o seu, você precisa estar logado na plataforma.
+              Para compartilhar seus hinos ou gerenciar seu repertório, faça login em sua conta PROMUSIC.
             </p>
           </div>
-          <Button className="mt-4" asChild>
-            <Link href="/login">
-              <LogIn className="mr-2 h-4 w-4" /> Fazer Login agora
-            </Link>
-          </Button>
+          <div className="flex justify-center gap-4 pt-4">
+            <Button asChild>
+              <Link href="/login">
+                <LogIn className="mr-2 h-4 w-4" /> Entrar
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/signup">Criar Conta</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -180,15 +219,17 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
 
   return (
     <div className="space-y-8">
-      {/* Estado do Perfil / Aprovação */}
+      {/* Fluxo de Cadastro/Status do Solista */}
       {(!profile?.username || !profile?.conjunto) ? (
-        <Card className="border-primary/50 bg-primary/5 shadow-lg">
+        <Card className="border-primary/50 bg-primary/5 shadow-lg border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-                <PlusCircle className="text-primary"/> 
-                Configure seu Perfil de Solista
+                <Music className="text-primary"/> 
+                Torne-se um Solista
             </CardTitle>
-            <CardDescription>Para postar hinos, informe seu nome artístico e o conjunto que você representa.</CardDescription>
+            <CardDescription>
+              Complete seu perfil para começar a postar seus hinos e ser agendado nos conjuntos.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...profileForm}>
@@ -199,9 +240,9 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Seu Nome / Nome do Solista</FormLabel>
+                        <FormLabel>Nome Artístico / Solista</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: Cantor João Silva" {...field} />
+                          <Input placeholder="Ex: Cantor Carlos Alencar" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -230,33 +271,34 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                     )}
                   />
                 </div>
-                <Button type="submit" className="w-full md:w-auto">Enviar para Aprovação</Button>
+                <Button type="submit" className="w-full md:w-auto">Solicitar Acesso Solista</Button>
               </form>
             </Form>
           </CardContent>
         </Card>
       ) : profile?.status === 'pending' ? (
-        <Alert className="bg-amber-50 border-amber-200">
-          <Clock className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800">Aprovação Pendente</AlertTitle>
+        <Alert className="bg-amber-50 border-amber-200 py-6">
+          <Clock className="h-5 w-5 text-amber-600" />
+          <AlertTitle className="text-amber-800 text-lg">Aguardando Aprovação</AlertTitle>
           <AlertDescription className="text-amber-700">
-            Seu perfil está aguardando a aprovação de um administrador. Você poderá postar hinos assim que for aprovado.
+            Sua solicitação para o conjunto <strong>{profile.conjunto}</strong> está em análise. 
+            Você receberá permissão para postar hinos em breve.
           </AlertDescription>
         </Alert>
       ) : profile?.status === 'rejected' ? (
-        <Alert variant="destructive">
-          <XCircle className="h-4 w-4" />
-          <AlertTitle>Solicitação Recusada</AlertTitle>
+        <Alert variant="destructive" className="py-6">
+          <XCircle className="h-5 w-5" />
+          <AlertTitle className="text-lg">Solicitação Não Aprovada</AlertTitle>
           <AlertDescription>
-            Sua solicitação de solista não foi aprovada. Entre em contato com a administração para mais detalhes.
+            Sua conta de solista não foi habilitada desta vez. Para mais informações, consulte a coordenação do seu conjunto.
           </AlertDescription>
         </Alert>
       ) : profile?.status === 'approved' && (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">Perfil Aprovado</AlertTitle>
+        <Alert className="bg-green-50 border-green-200 py-4">
+          <CheckCircle2 className="h-5 w-5 text-green-600" />
+          <AlertTitle className="text-green-800">Solista Verificado</AlertTitle>
           <AlertDescription className="text-green-700">
-            Você é um solista verificado! Agora pode postar e gerenciar seus hinos.
+            Bem-vindo, <strong>{profile.username}</strong>! Você está ativo no conjunto <strong>{profile.conjunto}</strong>.
           </AlertDescription>
         </Alert>
       )}
@@ -264,20 +306,20 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-2xl font-bold flex items-center gap-2 text-primary">
-            <Music className="h-6 w-6" /> Galeria de Solistas {targetConjunto ? `- ${targetConjunto}` : ""}
+            <Music className="h-6 w-6" /> Repertório de Solistas {targetConjunto ? `- ${targetConjunto}` : ""}
           </h2>
           {profile?.status === 'approved' && (
             <Button onClick={() => setIsAddingHymn(!isAddingHymn)} variant={isAddingHymn ? "outline" : "default"}>
-              {isAddingHymn ? "Fechar Formulário" : <><PlusCircle className="mr-2 h-4 w-4" /> Postar Meu Hino</>}
+              {isAddingHymn ? "Cancelar" : <><PlusCircle className="mr-2 h-4 w-4" /> Postar Hino</>}
             </Button>
           )}
         </div>
 
         {isAddingHymn && profile?.status === 'approved' && (
-          <Card className="animate-in fade-in slide-in-from-top-4">
+          <Card className="animate-in fade-in slide-in-from-top-4 border-primary shadow-lg">
             <CardHeader>
-              <CardTitle>Postar Novo Hino</CardTitle>
-              <CardDescription>O hino será postado em seu nome ({profile.username}).</CardDescription>
+              <CardTitle>Novo Hino</CardTitle>
+              <CardDescription>O hino será atribuído ao seu perfil de solista.</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...hymnForm}>
@@ -300,17 +342,17 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                     name="lyrics"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Letra do Hino (Opcional)</FormLabel>
+                        <FormLabel>Letra / Cifra (Opcional)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Cole a letra completa do hino aqui..." rows={8} {...field} />
+                          <Textarea placeholder="Insira a letra para auxiliar outros músicos..." rows={8} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <div className="flex justify-end gap-2 pt-2">
-                      <Button type="button" variant="ghost" onClick={() => setIsAddingHymn(false)}>Cancelar</Button>
-                      <Button type="submit">Publicar Agora</Button>
+                      <Button type="button" variant="ghost" onClick={() => setIsAddingHymn(false)}>Descartar</Button>
+                      <Button type="submit">Publicar Hino</Button>
                   </div>
                 </form>
               </Form>
@@ -324,7 +366,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Buscar hino ou solista..." 
+                  placeholder="Pesquisar por hino ou solista..." 
                   className="pl-9 bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -341,7 +383,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground bg-white border rounded-md px-3 h-10">
                 <Filter className="h-4 w-4" />
-                <span>Exibindo {filteredHymns?.length || 0} hinos</span>
+                <span>{filteredHymns?.length || 0} hinos encontrados</span>
               </div>
             </div>
           </CardContent>
@@ -359,7 +401,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                           <User className="h-4 w-4 text-primary" /> {hymn.solistaName}
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <CalendarIcon className="h-4 w-4" /> {hymn.createdAt && hymn.createdAt.seconds ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "..."}
+                          <CalendarIcon className="h-4 w-4" /> {hymn.createdAt && hymn.createdAt.seconds ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Recente"}
                         </span>
                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                           {hymn.conjunto}
@@ -372,26 +414,37 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                         size="icon" 
                         className="text-primary hover:bg-primary/10"
                         onClick={() => setSchedulingHymn(hymn)}
-                        title="Agendar no Calendário"
+                        title="Agendar Apresentação"
                       >
                         <CalendarPlus className="h-4 w-4" />
                       </Button>
                       {hymn.solistaId === user.uid && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-destructive hover:bg-destructive/10" 
-                          onClick={() => handleRemoveHymn(hymn.id)}
-                          title="Remover Hino"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-blue-600 hover:bg-blue-50" 
+                            onClick={() => handleStartEdit(hymn)}
+                            title="Editar Hino"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-destructive hover:bg-destructive/10" 
+                            onClick={() => handleRemoveHymn(hymn.id)}
+                            title="Excluir Hino"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
                   {hymn.lyrics && (
                     <div className="mt-6 border-t pt-4">
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Letra / Repertório</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Detalhes do Repertório</h4>
                         <div className="text-muted-foreground whitespace-pre-wrap text-sm italic leading-relaxed bg-muted/20 p-4 rounded-lg">
                           {hymn.lyrics}
                         </div>
@@ -403,19 +456,20 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
           {filteredHymns?.length === 0 && !isLoading && (
             <div className="text-center py-20 bg-muted/20 rounded-xl border-2 border-dashed">
               <Music className="mx-auto h-12 w-12 mb-4 opacity-20 text-primary" />
-              <h3 className="text-lg font-semibold">Nenhum hino encontrado</h3>
-              <p className="text-muted-foreground">Tente ajustar sua busca ou filtros de data.</p>
+              <h3 className="text-lg font-semibold">Sem hinos para exibir</h3>
+              <p className="text-muted-foreground">Utilize os filtros acima ou aguarde novas publicações.</p>
             </div>
           )}
         </div>
       </div>
 
+      {/* Modal de Agendamento */}
       <Dialog open={!!schedulingHymn} onOpenChange={() => setSchedulingHymn(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Agendar Hino</DialogTitle>
+            <DialogTitle>Agendar Apresentação</DialogTitle>
             <DialogDescription>
-              Escolha uma data para agendar o hino "{schedulingHymn?.title}".
+              Selecione a data para o hino "{schedulingHymn?.title}".
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center py-4">
@@ -429,8 +483,54 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setSchedulingHymn(null)}>Cancelar</Button>
-            <Button onClick={handleScheduleHymn} disabled={!selectedScheduleDate}>Salvar</Button>
+            <Button onClick={handleScheduleHymn} disabled={!selectedScheduleDate}>Confirmar Agendamento</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edição */}
+      <Dialog open={!!editingHymn} onOpenChange={() => setEditingHymn(null)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Editar Hino</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do hino publicado.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleSaveEdit)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="lyrics"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Letra / Cifra</FormLabel>
+                    <FormControl>
+                      <Textarea rows={10} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setEditingHymn(null)}>Cancelar</Button>
+                <Button type="submit"><Save className="mr-2 h-4 w-4" /> Salvar Alterações</Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
