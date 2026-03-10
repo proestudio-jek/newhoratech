@@ -25,9 +25,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Trash2, ListMusic, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { PlaylistItem } from "@/lib/types";
+import type { PlaylistItem, UserProfile } from "@/lib/types";
 import { collection, query, orderBy, doc, serverTimestamp, where } from "firebase/firestore";
-import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
+import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useDoc } from "@/firebase";
 
 const formSchema = z.object({
   title: z.string().min(3, "O nome do hino deve ter pelo menos 3 caracteres."),
@@ -41,6 +41,12 @@ export function CommunityPlaylists({ targetConjunto }: CommunityPlaylistsProps) 
   const { user, isAdmin } = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
+
+  const userRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, "users", user.uid);
+  }, [db, user]);
+  const { data: profile } = useDoc<UserProfile>(userRef);
 
   const playlistCollectionRef = useMemoFirebase(() => {
     if(!db) return null;
@@ -65,6 +71,8 @@ export function CommunityPlaylists({ targetConjunto }: CommunityPlaylistsProps) 
     },
   });
 
+  const canAddHymn = isAdmin || (profile?.status === 'approved' && profile?.conjunto === targetConjunto);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !playlistCollectionRef) return;
     
@@ -72,6 +80,7 @@ export function CommunityPlaylists({ targetConjunto }: CommunityPlaylistsProps) 
       title: values.title,
       createdAt: serverTimestamp(),
       conjunto: targetConjunto,
+      addedBy: user.uid,
     };
 
     addDocumentNonBlocking(playlistCollectionRef, newHymnData);
@@ -102,7 +111,7 @@ export function CommunityPlaylists({ targetConjunto }: CommunityPlaylistsProps) 
 
   return (
     <div className="space-y-6">
-      {user && isAdmin && (
+      {canAddHymn && (
         <Card>
           <CardHeader>
             <CardTitle>Adicionar Hino à Playlist</CardTitle>
@@ -154,7 +163,7 @@ export function CommunityPlaylists({ targetConjunto }: CommunityPlaylistsProps) 
                         <span className="text-muted-foreground font-mono text-xs">{index + 1}.</span>
                         <span className="font-medium text-sm sm:text-base">{item.title}</span>
                         </div>
-                        {user && isAdmin && (
+                        {isAdmin && (
                         <Button
                             variant="ghost"
                             size="icon"
@@ -175,7 +184,7 @@ export function CommunityPlaylists({ targetConjunto }: CommunityPlaylistsProps) 
             <div className="text-center text-muted-foreground p-4">
                 <ListMusic className="mx-auto h-12 w-12 mb-4 opacity-20"/>
                 <h2 className="text-xl font-semibold">Playlist Vazia</h2>
-                {isAdmin ? <p className="text-sm">Comece a montar o repertório deste conjunto acima.</p> : <p className="text-sm">Ainda não há hinos nesta playlist.</p>}
+                {canAddHymn ? <p className="text-sm">Comece a montar o repertório deste conjunto acima.</p> : <p className="text-sm">Ainda não há hinos nesta playlist.</p>}
             </div>
         </div>
       )}
