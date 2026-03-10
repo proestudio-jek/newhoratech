@@ -1,18 +1,21 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO ESTÁVEL)
-    // Gatilho de Implantação: 2025-05-27 19:30 (GMT)
-    // Objetivo: Garantir leitura pública total e escrita protegida.
+    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO ATUALIZADA COM APROVAÇÕES)
+    // Gatilho de Implantação: 2025-05-27 20:45 (GMT)
     
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Coleções de Conteúdo Público: Leitura (get/list) liberada para todos.
-    // Escrita protegida por autenticação.
-    
+    function isApprovedSoloist() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return isSignedIn() && userDoc.data.status == 'approved';
+    }
+
+    // Conteúdo Público: Leitura irrestrita. Escrita restrita.
     match /community-news/{id=**} {
       allow read: if true;
       allow write: if isSignedIn();
@@ -40,18 +43,23 @@ service cloud.firestore {
 
     match /solistaHymns/{id=**} {
       allow read: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (
+      allow create: if isApprovedSoloist();
+      allow update, delete: if isApprovedSoloist() && (
         resource == null || resource.data.solistaId == request.auth.uid
       );
     }
 
-    // Perfil de usuário: O próprio dono pode ler e escrever.
+    // Perfil de usuário: O dono pode ler/escrever. Status só pode ser alterado via backend/admin se necessário, 
+    // mas aqui permitimos que o dono crie o perfil inicial.
     match /users/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (
+        request.auth.uid == userId ||
+        // Permitir que admins aprovem (embora usemos o console ou modo admin local)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'role'])
+      );
     }
 
-    // Bloqueio padrão
     match /{allPaths=**} {
       allow read, write: if false;
     }

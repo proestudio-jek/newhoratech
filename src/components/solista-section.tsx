@@ -16,7 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { PlusCircle, Search, Calendar as CalendarIcon, User, Music, Trash2, Filter, LogIn, CalendarPlus } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PlusCircle, Search, Calendar as CalendarIcon, User, Music, Trash2, Filter, LogIn, CalendarPlus, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -79,7 +80,10 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
 
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: { username: profile?.username || "", conjunto: profile?.conjunto || targetConjunto || "" },
+    defaultValues: { 
+      username: profile?.username || "", 
+      conjunto: profile?.conjunto || targetConjunto || "" 
+    },
   });
 
   const handleUpdateProfile = (values: z.infer<typeof profileFormSchema>) => {
@@ -87,15 +91,16 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
     updateDocumentNonBlocking(userRef, {
       username: values.username,
       conjunto: values.conjunto,
+      status: "pending", // Sempre volta para pendente ao atualizar dados críticos
     });
     toast({ 
-      title: "Perfil Atualizado!", 
-      description: "Agora você pode postar seus hinos com sua identificação completa." 
+      title: "Solicitação Enviada!", 
+      description: "Seu perfil foi enviado para aprovação administrativa." 
     });
   };
 
   const handleAddHymn = (values: z.infer<typeof hymnFormSchema>) => {
-    if (!hymnsColRef || !profile || !user) return;
+    if (!hymnsColRef || !profile || !user || profile.status !== 'approved') return;
     
     const newHymn = {
       title: values.title,
@@ -125,7 +130,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
       hymnId: schedulingHymn.id,
       hymnTitle: schedulingHymn.title,
       date: Timestamp.fromDate(selectedScheduleDate),
-      conjunto: schedulingHymn.conjunto, // Salva o conjunto do hino
+      conjunto: schedulingHymn.conjunto,
       createdAt: serverTimestamp(),
     };
 
@@ -133,7 +138,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
     setSchedulingHymn(null);
     toast({
       title: "Hino Agendado!",
-      description: `"${schedulingHymn.title}" foi agendado no calendário do conjunto ${schedulingHymn.conjunto} para ${format(selectedScheduleDate, "dd/MM/yyyy")}.`,
+      description: `"${schedulingHymn.title}" foi agendado para ${format(selectedScheduleDate, "dd/MM/yyyy")}.`,
     });
   };
 
@@ -175,14 +180,15 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
 
   return (
     <div className="space-y-8">
-      {!profile?.conjunto && (
+      {/* Estado do Perfil / Aprovação */}
+      {(!profile?.username || !profile?.conjunto) ? (
         <Card className="border-primary/50 bg-primary/5 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
                 <PlusCircle className="text-primary"/> 
                 Configure seu Perfil de Solista
             </CardTitle>
-            <CardDescription>Para que os outros saibam quem você é, informe seu nome artístico e o conjunto que você representa.</CardDescription>
+            <CardDescription>Para postar hinos, informe seu nome artístico e o conjunto que você representa.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...profileForm}>
@@ -224,167 +230,190 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                     )}
                   />
                 </div>
-                <Button type="submit" className="w-full md:w-auto">Salvar Identificação</Button>
+                <Button type="submit" className="w-full md:w-auto">Enviar para Aprovação</Button>
               </form>
             </Form>
           </CardContent>
         </Card>
+      ) : profile?.status === 'pending' ? (
+        <Alert className="bg-amber-50 border-amber-200">
+          <Clock className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Aprovação Pendente</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            Seu perfil está aguardando a aprovação de um administrador. Você poderá postar hinos assim que for aprovado.
+          </AlertDescription>
+        </Alert>
+      ) : profile?.status === 'rejected' ? (
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4" />
+          <AlertTitle>Solicitação Recusada</AlertTitle>
+          <AlertDescription>
+            Sua solicitação de solista não foi aprovada. Entre em contato com a administração para mais detalhes.
+          </AlertDescription>
+        </Alert>
+      ) : profile?.status === 'approved' && (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <AlertTitle className="text-green-800">Perfil Aprovado</AlertTitle>
+          <AlertDescription className="text-green-700">
+            Você é um solista verificado! Agora pode postar e gerenciar seus hinos.
+          </AlertDescription>
+        </Alert>
       )}
 
-      {profile?.conjunto && (
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-2xl font-bold flex items-center gap-2 text-primary">
-              <Music className="h-6 w-6" /> Galeria de Solistas {targetConjunto ? `- ${targetConjunto}` : ""}
-            </h2>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-2xl font-bold flex items-center gap-2 text-primary">
+            <Music className="h-6 w-6" /> Galeria de Solistas {targetConjunto ? `- ${targetConjunto}` : ""}
+          </h2>
+          {profile?.status === 'approved' && (
             <Button onClick={() => setIsAddingHymn(!isAddingHymn)} variant={isAddingHymn ? "outline" : "default"}>
               {isAddingHymn ? "Fechar Formulário" : <><PlusCircle className="mr-2 h-4 w-4" /> Postar Meu Hino</>}
             </Button>
-          </div>
-
-          {isAddingHymn && (
-            <Card className="animate-in fade-in slide-in-from-top-4">
-              <CardHeader>
-                <CardTitle>Postar Novo Hino</CardTitle>
-                <CardDescription>O hino será postado em seu nome ({profile.username}) e vinculado ao conjunto {profile.conjunto}.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...hymnForm}>
-                  <form onSubmit={hymnForm.handleSubmit(handleAddHymn)} className="space-y-4">
-                    <FormField
-                      control={hymnForm.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Título do Hino</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ex: Grandioso És Tu" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={hymnForm.control}
-                      name="lyrics"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Letra do Hino (Opcional)</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="Cole a letra completa do hino aqui (se houver)..." rows={8} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="ghost" onClick={() => setIsAddingHymn(false)}>Cancelar</Button>
-                        <Button type="submit">Publicar Agora</Button>
-                    </div>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
           )}
+        </div>
 
-          <Card className="bg-muted/30">
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Buscar por hino ou solista..." 
-                    className="pl-9 bg-white"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+        {isAddingHymn && profile?.status === 'approved' && (
+          <Card className="animate-in fade-in slide-in-from-top-4">
+            <CardHeader>
+              <CardTitle>Postar Novo Hino</CardTitle>
+              <CardDescription>O hino será postado em seu nome ({profile.username}).</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...hymnForm}>
+                <form onSubmit={hymnForm.handleSubmit(handleAddHymn)} className="space-y-4">
+                  <FormField
+                    control={hymnForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Título do Hino</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Grandioso És Tu" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="relative">
-                  <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    type="date" 
-                    className="pl-9 bg-white"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
+                  <FormField
+                    control={hymnForm.control}
+                    name="lyrics"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Letra do Hino (Opcional)</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Cole a letra completa do hino aqui..." rows={8} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-white border rounded-md px-3 h-10">
-                  <Filter className="h-4 w-4" />
-                  <span>Exibindo {filteredHymns?.length || 0} hinos</span>
-                </div>
-              </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                      <Button type="button" variant="ghost" onClick={() => setIsAddingHymn(false)}>Cancelar</Button>
+                      <Button type="submit">Publicar Agora</Button>
+                  </div>
+                </form>
+              </Form>
             </CardContent>
           </Card>
+        )}
 
-          <div className="grid grid-cols-1 gap-6">
-            {filteredHymns?.map((hymn) => (
-              <Card key={hymn.id} className="group overflow-hidden border-l-4 border-l-primary hover:shadow-md transition-shadow">
-                <div className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{hymn.title}</CardTitle>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1.5 font-medium text-foreground">
-                            <User className="h-4 w-4 text-primary" /> {hymn.solistaName}
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <CalendarIcon className="h-4 w-4" /> {hymn.createdAt && hymn.createdAt.seconds ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "..."}
-                          </span>
-                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                            {hymn.conjunto}
-                          </span>
-                        </div>
+        <Card className="bg-muted/30">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar hino ou solista..." 
+                  className="pl-9 bg-white"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="relative">
+                <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  type="date" 
+                  className="pl-9 bg-white"
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-white border rounded-md px-3 h-10">
+                <Filter className="h-4 w-4" />
+                <span>Exibindo {filteredHymns?.length || 0} hinos</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-6">
+          {filteredHymns?.map((hymn) => (
+            <Card key={hymn.id} className="group overflow-hidden border-l-4 border-l-primary hover:shadow-md transition-shadow">
+              <div className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <CardTitle className="text-xl group-hover:text-primary transition-colors">{hymn.title}</CardTitle>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1.5 font-medium text-foreground">
+                          <User className="h-4 w-4 text-primary" /> {hymn.solistaName}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <CalendarIcon className="h-4 w-4" /> {hymn.createdAt && hymn.createdAt.seconds ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "..."}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                          {hymn.conjunto}
+                        </span>
                       </div>
-                      <div className="flex gap-2">
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-primary hover:bg-primary/10"
+                        onClick={() => setSchedulingHymn(hymn)}
+                        title="Agendar no Calendário"
+                      >
+                        <CalendarPlus className="h-4 w-4" />
+                      </Button>
+                      {hymn.solistaId === user.uid && (
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="text-primary hover:bg-primary/10"
-                          onClick={() => setSchedulingHymn(hymn)}
-                          title="Agendar no Calendário"
+                          className="text-destructive hover:bg-destructive/10" 
+                          onClick={() => handleRemoveHymn(hymn.id)}
+                          title="Remover Hino"
                         >
-                          <CalendarPlus className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                        {hymn.solistaId === user.uid && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive hover:bg-destructive/10" 
-                            onClick={() => handleRemoveHymn(hymn.id)}
-                            title="Remover Hino"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                      )}
                     </div>
-                    {hymn.lyrics && (
-                      <div className="mt-6 border-t pt-4">
-                          <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Letra / Repertório</h4>
-                          <div className="text-muted-foreground whitespace-pre-wrap text-sm italic leading-relaxed bg-muted/20 p-4 rounded-lg">
-                            {hymn.lyrics}
-                          </div>
-                      </div>
-                    )}
-                </div>
-              </Card>
-            ))}
-            {filteredHymns?.length === 0 && !isLoading && (
-              <div className="text-center py-20 bg-muted/20 rounded-xl border-2 border-dashed">
-                <Music className="mx-auto h-12 w-12 mb-4 opacity-20 text-primary" />
-                <h3 className="text-lg font-semibold">Nenhum hino encontrado</h3>
-                <p className="text-muted-foreground">Tente ajustar sua busca ou filtros de data.</p>
+                  </div>
+                  {hymn.lyrics && (
+                    <div className="mt-6 border-t pt-4">
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Letra / Repertório</h4>
+                        <div className="text-muted-foreground whitespace-pre-wrap text-sm italic leading-relaxed bg-muted/20 p-4 rounded-lg">
+                          {hymn.lyrics}
+                        </div>
+                    </div>
+                  )}
               </div>
-            )}
-          </div>
+            </Card>
+          ))}
+          {filteredHymns?.length === 0 && !isLoading && (
+            <div className="text-center py-20 bg-muted/20 rounded-xl border-2 border-dashed">
+              <Music className="mx-auto h-12 w-12 mb-4 opacity-20 text-primary" />
+              <h3 className="text-lg font-semibold">Nenhum hino encontrado</h3>
+              <p className="text-muted-foreground">Tente ajustar sua busca ou filtros de data.</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Diálogo de Agendamento */}
       <Dialog open={!!schedulingHymn} onOpenChange={() => setSchedulingHymn(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Agendar Hino no Calendário</DialogTitle>
+            <DialogTitle>Agendar Hino</DialogTitle>
             <DialogDescription>
               Escolha uma data para agendar o hino "{schedulingHymn?.title}".
             </DialogDescription>
@@ -400,7 +429,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setSchedulingHymn(null)}>Cancelar</Button>
-            <Button onClick={handleScheduleHymn} disabled={!selectedScheduleDate}>Salvar no Calendário</Button>
+            <Button onClick={handleScheduleHymn} disabled={!selectedScheduleDate}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

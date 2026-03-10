@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Hymn": {
@@ -88,6 +89,8 @@
         "username": { "type": "string" },
         "email": { "type": "string" },
         "conjunto": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["email"]

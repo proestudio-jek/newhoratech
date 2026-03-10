@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -26,6 +27,7 @@ import {
   Users,
   Mic,
   Music2,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -49,7 +51,7 @@ const communityItems = [
     { href: "/grande-coral", label: "Grande Coral", icon: Mic },
 ]
 
-function MainNav({ isMobile, onItemClick }: { isMobile: boolean; onItemClick?: () => void }) {
+function MainNav({ isMobile, onItemClick, isAdmin }: { isMobile: boolean; onItemClick?: () => void; isAdmin: boolean }) {
   const pathname = usePathname();
   
   const navLinks = (
@@ -71,6 +73,23 @@ function MainNav({ isMobile, onItemClick }: { isMobile: boolean; onItemClick?: (
           </Link>
         </Button>
       ))}
+
+      {isAdmin && (
+        <Button
+          asChild
+          variant={pathname === "/admin/approvals" ? (isMobile ? 'secondary' : 'ghost') : "ghost"}
+          className={cn(
+            "justify-start font-medium",
+            isMobile ? "text-foreground" : "text-white hover:bg-white/20"
+          )}
+          onClick={onItemClick}
+        >
+          <Link href="/admin/approvals">
+            <UserCheck className="mr-2 h-4 w-4" />
+            Aprovações
+          </Link>
+        </Button>
+      )}
       
       {isMobile ? (
          <>
@@ -155,7 +174,7 @@ function SiteHeader() {
              </div>
             <span className="inline-block font-bold font-headline text-white text-2xl">PROMUSIC</span>
           </Link>
-          <MainNav isMobile={false} />
+          <MainNav isMobile={false} isAdmin={isAdmin} />
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
@@ -200,7 +219,7 @@ function SiteHeader() {
                    </SheetHeader>
                   <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
                     <div className="flex flex-col space-y-3">
-                       <MainNav isMobile={true} onItemClick={closeMobileNav} />
+                       <MainNav isMobile={true} onItemClick={closeMobileNav} isAdmin={isAdmin} />
                        <div className="flex flex-col space-y-2 pt-6 border-t mt-6">
                         <div className="flex items-center justify-between px-4 mb-4">
                             <Label htmlFor="admin-mode-mobile" className="text-sm">Modo Admin</Label>

@@ -52,7 +52,8 @@ export type UserProfile = {
   id: string;
   username: string;
   email: string;
-  role: string;
+  role: 'user' | 'admin';
+  status?: 'pending' | 'approved' | 'rejected';
   conjunto?: string;
   createdAt: any;
 };
