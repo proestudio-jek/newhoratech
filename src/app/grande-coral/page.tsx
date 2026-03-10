@@ -13,11 +13,18 @@ export default function GrandeCoralPage() {
     content: <SolistaSection targetConjunto="Grande Coral" />,
   };
 
+  const coralTheme = {
+    primary: "271 91% 65%", // Purple 500
+    accent: "292 84% 61%",
+    gradient: "from-purple-500 via-violet-600 to-fuchsia-800",
+  };
+
   return (
     <ContentPage
       title="Grande Coral"
-      description="Apresentações e repertório do Grande Coral."
+      description="A grandiosidade do louvor em coro. Conheça nosso repertório, apresentações especiais e a galeria de solistas."
       extraTabs={[solistaTab]}
+      colorTheme={coralTheme}
     />
   );
 }

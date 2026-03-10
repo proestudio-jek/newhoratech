@@ -13,11 +13,18 @@ export default function LouvoresDeSiaoPage() {
     content: <SolistaSection targetConjunto="Louvores de Sião" />,
   };
 
+  const siaoTheme = {
+    primary: "199 89% 48%", // Sky 600
+    accent: "187 92% 45%",
+    gradient: "from-sky-500 via-cyan-600 to-teal-700",
+  };
+
   return (
     <ContentPage
       title="Louvores de Sião"
-      description="Explore os louvores, eventos e a galeria de hinos dos solistas do conjunto Sião."
+      description="Seja bem-vindo ao portal do conjunto Sião. Aqui você encontra os louvores que tocam o coração e as últimas novidades."
       extraTabs={[solistaTab]}
+      colorTheme={siaoTheme}
     />
   );
 }
