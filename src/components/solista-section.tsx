@@ -40,7 +40,7 @@ interface SolistaSectionProps {
 }
 
 export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
   
@@ -191,14 +191,15 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
   };
 
   const handleBulkAddToPlaylist = () => {
-    if (!playlistColRef || !allHymns || !user || !targetConjunto) return;
+    if (!playlistColRef || !allHymns || !user) return;
 
+    // Use ensemble from current context or ensemble of the selected hymns
     const selectedHymnsData = allHymns.filter(h => selectedHymnIds.includes(h.id));
     
     selectedHymnsData.forEach(hymn => {
       addDocumentNonBlocking(playlistColRef, {
         title: hymn.title,
-        conjunto: targetConjunto,
+        conjunto: targetConjunto || hymn.conjunto,
         createdAt: serverTimestamp(),
         addedBy: user.uid,
       });
@@ -207,7 +208,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
     setSelectedHymnIds([]);
     toast({
       title: "Hinos Adicionados",
-      description: `${selectedHymnsData.length} hinos foram adicionados à playlist do conjunto ${targetConjunto}.`,
+      description: `${selectedHymnsData.length} hinos foram adicionados à playlist.`,
     });
   };
 
@@ -254,12 +255,12 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
     );
   }
 
-  const canManagePlaylist = profile?.status === 'approved' || profile?.role === 'admin';
+  const canManagePlaylist = isAdmin || (profile?.status === 'approved' && profile?.conjunto === targetConjunto);
 
   return (
     <div className="space-y-8">
       {/* Fluxo de Cadastro/Status do Solista */}
-      {(!profile?.username || !profile?.conjunto) ? (
+      {(!profile?.username || !profile?.conjunto) && !isAdmin ? (
         <Card className="border-primary/50 bg-primary/5 shadow-lg border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -315,7 +316,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
             </Form>
           </CardContent>
         </Card>
-      ) : profile?.status === 'pending' ? (
+      ) : profile?.status === 'pending' && !isAdmin ? (
         <Alert className="bg-amber-50 border-amber-200 py-6">
           <Clock className="h-5 w-5 text-amber-600" />
           <AlertTitle className="text-amber-800 text-lg">Aguardando Aprovação</AlertTitle>
@@ -324,7 +325,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
             Você receberá permissão para postar hinos em breve.
           </AlertDescription>
         </Alert>
-      ) : profile?.status === 'rejected' ? (
+      ) : profile?.status === 'rejected' && !isAdmin ? (
         <Alert variant="destructive" className="py-6">
           <XCircle className="h-5 w-5" />
           <AlertTitle className="text-lg">Solicitação Não Aprovada</AlertTitle>
@@ -332,25 +333,25 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
             Sua conta de solista não foi habilitada desta vez. Para mais informações, consulte a coordenação do seu conjunto.
           </AlertDescription>
         </Alert>
-      ) : profile?.status === 'approved' && (
+      ) : (profile?.status === 'approved' || isAdmin) && (
         <Alert className="bg-green-50 border-green-200 py-4">
           <CheckCircle2 className="h-5 w-5 text-green-600" />
-          <AlertTitle className="text-green-800">Solista Verificado</AlertTitle>
+          <AlertTitle className="text-green-800">{isAdmin ? "Modo Administrativo Ativado" : "Solista Verificado"}</AlertTitle>
           <AlertDescription className="text-green-700">
-            Bem-vindo, <strong>{profile.username}</strong>! Você está ativo no conjunto <strong>{profile.conjunto}</strong>.
+            {isAdmin ? "Você tem acesso total para gerenciar o repertório de todos os solistas." : <>Bem-vindo, <strong>{profile?.username}</strong>! Você está ativo no conjunto <strong>{profile?.conjunto}</strong>.</>}
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Área de Adição de Hino para Solista Logado */}
-      {profile?.status === 'approved' && (
+      {/* Área de Adição de Hino para Solista Logado ou Admin */}
+      {(profile?.status === 'approved' || isAdmin) && (
         <Card className="border-2 border-primary/20 shadow-md">
            <CardHeader className="pb-4">
              <CardTitle className="text-xl flex items-center gap-2">
                <ListPlus className="text-primary h-5 w-5" />
                Adicionar Hino ao Repertório
              </CardTitle>
-             <CardDescription>Inclua novos hinos que você está ensaiando ou já canta.</CardDescription>
+             <CardDescription>Inclua novos hinos {isAdmin ? "ao banco de dados geral" : "que você está ensaiando"}.</CardDescription>
            </CardHeader>
            <CardContent>
              <Form {...hymnForm}>
@@ -397,10 +398,10 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-2xl font-bold flex items-center gap-2 text-primary">
-            <Music className="h-6 w-6" /> Repertório de Solistas {targetConjunto ? `- ${targetConjunto}` : ""}
+            <Music className="h-6 w-6" /> Repertório de Solistas {targetConjunto ? `- ${targetConjunto}` : "Geral"}
           </h2>
           <div className="flex items-center gap-2">
-            {profile?.status === 'approved' && (
+            {(profile?.status === 'approved' || isAdmin) && (
               <Button 
                 variant={viewOnlyMine ? "secondary" : "ghost"} 
                 size="sm" 
@@ -424,7 +425,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                   Cancelar
                 </Button>
                 <Button size="sm" onClick={handleBulkAddToPlaylist} className="flex-1 sm:flex-none">
-                  Adicionar à Playlist de {targetConjunto}
+                  Adicionar à Playlist {targetConjunto ? `de ${targetConjunto}` : ""}
                 </Button>
               </div>
             </CardContent>
@@ -499,7 +500,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                         >
                           <CalendarPlus className="h-4 w-4" />
                         </Button>
-                        {hymn.solistaId === user.uid && (
+                        {(hymn.solistaId === user.uid || isAdmin) && (
                           <>
                             <Button 
                               variant="ghost" 

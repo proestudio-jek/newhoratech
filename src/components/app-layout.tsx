@@ -28,6 +28,7 @@ import {
   Mic,
   Music2,
   UserCheck,
+  Library,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -75,20 +76,36 @@ function MainNav({ isMobile, onItemClick, isAdmin }: { isMobile: boolean; onItem
       ))}
 
       {isAdmin && (
-        <Button
-          asChild
-          variant={pathname === "/admin/approvals" ? (isMobile ? 'secondary' : 'ghost') : "ghost"}
-          className={cn(
-            "justify-start font-medium",
-            isMobile ? "text-foreground" : "text-white hover:bg-white/20"
-          )}
-          onClick={onItemClick}
-        >
-          <Link href="/admin/approvals">
-            <UserCheck className="mr-2 h-4 w-4" />
-            Aprovações
-          </Link>
-        </Button>
+        <>
+          <Button
+            asChild
+            variant={pathname === "/admin/approvals" ? (isMobile ? 'secondary' : 'ghost') : "ghost"}
+            className={cn(
+              "justify-start font-medium",
+              isMobile ? "text-foreground" : "text-white hover:bg-white/20"
+            )}
+            onClick={onItemClick}
+          >
+            <Link href="/admin/approvals">
+              <UserCheck className="mr-2 h-4 w-4" />
+              Aprovações
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant={pathname === "/admin/repertoire" ? (isMobile ? 'secondary' : 'ghost') : "ghost"}
+            className={cn(
+              "justify-start font-medium",
+              isMobile ? "text-foreground" : "text-white hover:bg-white/20"
+            )}
+            onClick={onItemClick}
+          >
+            <Link href="/admin/repertoire">
+              <Library className="mr-2 h-4 w-4" />
+              Gestão de Hinos
+            </Link>
+          </Button>
+        </>
       )}
       
       {isMobile ? (
