@@ -17,7 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PlusCircle, Search, Calendar as CalendarIcon, User, Music, Trash2, Filter, LogIn, CalendarPlus, Clock, CheckCircle2, XCircle, Edit, Save, ListPlus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { PlusCircle, Search, Calendar as CalendarIcon, User, Music, Trash2, Filter, LogIn, CalendarPlus, Clock, CheckCircle2, XCircle, Edit, Save, ListPlus, ListChecks } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -50,6 +51,7 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
   const [schedulingHymn, setSchedulingHymn] = useState<SolistaHymn | null>(null);
   const [selectedScheduleDate, setSelectedScheduleDate] = useState<Date | undefined>(new Date());
   const [viewOnlyMine, setViewOnlyMine] = useState(false);
+  const [selectedHymnIds, setSelectedHymnIds] = useState<string[]>([]);
 
   const userRef = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -61,6 +63,11 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
   const hymnsColRef = useMemoFirebase(() => {
     if (!db) return null;
     return collection(db, "solistaHymns");
+  }, [db]);
+
+  const playlistColRef = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "community-playlist");
   }, [db]);
 
   const calendarColRef = useMemoFirebase(() => {
@@ -177,6 +184,33 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
     });
   };
 
+  const handleToggleSelectHymn = (id: string) => {
+    setSelectedHymnIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkAddToPlaylist = () => {
+    if (!playlistColRef || !allHymns || !user || !targetConjunto) return;
+
+    const selectedHymnsData = allHymns.filter(h => selectedHymnIds.includes(h.id));
+    
+    selectedHymnsData.forEach(hymn => {
+      addDocumentNonBlocking(playlistColRef, {
+        title: hymn.title,
+        conjunto: targetConjunto,
+        createdAt: serverTimestamp(),
+        addedBy: user.uid,
+      });
+    });
+
+    setSelectedHymnIds([]);
+    toast({
+      title: "Hinos Adicionados",
+      description: `${selectedHymnsData.length} hinos foram adicionados à playlist do conjunto ${targetConjunto}.`,
+    });
+  };
+
   const filteredHymns = allHymns?.filter(hymn => {
     const matchesConjunto = !targetConjunto || hymn.conjunto === targetConjunto;
     const matchesSearch = hymn.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -219,6 +253,8 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
       </Card>
     );
   }
+
+  const canManagePlaylist = profile?.status === 'approved' || profile?.role === 'admin';
 
   return (
     <div className="space-y-8">
@@ -363,18 +399,37 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
           <h2 className="text-2xl font-bold flex items-center gap-2 text-primary">
             <Music className="h-6 w-6" /> Repertório de Solistas {targetConjunto ? `- ${targetConjunto}` : ""}
           </h2>
-          {profile?.status === 'approved' && (
-             <div className="flex items-center gap-2">
-                <Button 
-                  variant={viewOnlyMine ? "secondary" : "ghost"} 
-                  size="sm" 
-                  onClick={() => setViewOnlyMine(!viewOnlyMine)}
-                >
-                  {viewOnlyMine ? "Ver Todos" : "Meus Hinos"}
-                </Button>
-             </div>
-          )}
+          <div className="flex items-center gap-2">
+            {profile?.status === 'approved' && (
+              <Button 
+                variant={viewOnlyMine ? "secondary" : "ghost"} 
+                size="sm" 
+                onClick={() => setViewOnlyMine(!viewOnlyMine)}
+              >
+                {viewOnlyMine ? "Ver Todos" : "Meus Hinos"}
+              </Button>
+            )}
+          </div>
         </div>
+
+        {selectedHymnIds.length > 0 && canManagePlaylist && (
+          <Card className="bg-primary/5 border-primary/20 sticky top-20 z-10 shadow-lg">
+            <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <ListChecks className="h-5 w-5 text-primary" />
+                <span className="font-semibold">{selectedHymnIds.length} hinos selecionados</span>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button variant="outline" size="sm" onClick={() => setSelectedHymnIds([])} className="flex-1 sm:flex-none">
+                  Cancelar
+                </Button>
+                <Button size="sm" onClick={handleBulkAddToPlaylist} className="flex-1 sm:flex-none">
+                  Adicionar à Playlist de {targetConjunto}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="bg-muted/30">
           <CardContent className="pt-6">
@@ -407,65 +462,76 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
 
         <div className="grid grid-cols-1 gap-6">
           {filteredHymns?.map((hymn) => (
-            <Card key={hymn.id} className="group overflow-hidden border-l-4 border-l-primary hover:shadow-md transition-shadow">
-              <div className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <CardTitle className="text-xl group-hover:text-primary transition-colors">{hymn.title}</CardTitle>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1.5 font-medium text-foreground">
-                          <User className="h-4 w-4 text-primary" /> {hymn.solistaName}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <CalendarIcon className="h-4 w-4" /> {hymn.createdAt && hymn.createdAt.seconds ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Recente"}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                          {hymn.conjunto}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-primary hover:bg-primary/10"
-                        onClick={() => setSchedulingHymn(hymn)}
-                        title="Agendar Apresentação"
-                      >
-                        <CalendarPlus className="h-4 w-4" />
-                      </Button>
-                      {hymn.solistaId === user.uid && (
-                        <>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-blue-600 hover:bg-blue-50" 
-                            onClick={() => handleStartEdit(hymn)}
-                            title="Editar Hino"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive hover:bg-destructive/10" 
-                            onClick={() => handleRemoveHymn(hymn.id)}
-                            title="Excluir Hino"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {hymn.lyrics && (
-                    <div className="mt-6 border-t pt-4">
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Informações Adicionais</h4>
-                        <div className="text-muted-foreground whitespace-pre-wrap text-sm italic leading-relaxed bg-muted/20 p-4 rounded-lg">
-                          {hymn.lyrics}
-                        </div>
+            <Card key={hymn.id} className={`group overflow-hidden border-l-4 transition-all duration-200 ${selectedHymnIds.includes(hymn.id) ? 'border-l-primary bg-primary/5 shadow-md' : 'border-l-primary/30 hover:shadow-md'}`}>
+              <div className="p-4 sm:p-6 flex gap-4 items-start">
+                  {canManagePlaylist && (
+                    <div className="pt-1">
+                      <Checkbox 
+                        checked={selectedHymnIds.includes(hymn.id)} 
+                        onCheckedChange={() => handleToggleSelectHymn(hymn.id)}
+                        className="size-5"
+                      />
                     </div>
                   )}
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{hymn.title}</CardTitle>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1.5 font-medium text-foreground">
+                            <User className="h-4 w-4 text-primary" /> {hymn.solistaName}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <CalendarIcon className="h-4 w-4" /> {hymn.createdAt && hymn.createdAt.seconds ? format(new Date(hymn.createdAt.seconds * 1000), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : "Recente"}
+                          </span>
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                            {hymn.conjunto}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-primary hover:bg-primary/10"
+                          onClick={() => setSchedulingHymn(hymn)}
+                          title="Agendar Apresentação"
+                        >
+                          <CalendarPlus className="h-4 w-4" />
+                        </Button>
+                        {hymn.solistaId === user.uid && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-blue-600 hover:bg-blue-50" 
+                              onClick={() => handleStartEdit(hymn)}
+                              title="Editar Hino"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive hover:bg-destructive/10" 
+                              onClick={() => handleRemoveHymn(hymn.id)}
+                              title="Excluir Hino"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {hymn.lyrics && (
+                      <div className="mt-6 border-t pt-4">
+                          <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Informações Adicionais</h4>
+                          <div className="text-muted-foreground whitespace-pre-wrap text-sm italic leading-relaxed bg-muted/20 p-4 rounded-lg">
+                            {hymn.lyrics}
+                          </div>
+                      </div>
+                    )}
+                  </div>
               </div>
             </Card>
           ))}
