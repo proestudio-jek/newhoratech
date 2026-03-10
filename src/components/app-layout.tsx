@@ -18,7 +18,6 @@ import {
   Home,
   Menu,
   Music,
-  Video,
   LogIn,
   LogOut,
   Facebook,
@@ -43,7 +42,6 @@ import {
 const navItems = [
   { href: "/", label: "Início", icon: Home },
   { href: "/calendar", label: "Calendário", icon: CalendarDays },
-  { href: "/videos", label: "Vídeos", icon: Video },
 ];
 
 const communityItems = [
