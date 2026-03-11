@@ -21,6 +21,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { ArrowRight, Users, Mic, Music2, Youtube, Play, Music } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const SpotifyIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="size-6 mr-2">
