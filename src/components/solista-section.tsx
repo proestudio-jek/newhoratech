@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -477,7 +476,10 @@ export function SolistaSection({ targetConjunto }: SolistaSectionProps) {
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
-                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{hymn.title}</CardTitle>
+                        <CardTitle className="text-xl group-hover:text-primary transition-colors flex items-center gap-2">
+                          <Music className="h-5 w-5 text-primary" />
+                          {hymn.title}
+                        </CardTitle>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1.5 font-medium text-foreground">
                             <User className="h-4 w-4 text-primary" /> {hymn.solistaName}
