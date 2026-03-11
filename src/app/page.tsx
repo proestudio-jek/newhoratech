@@ -1,6 +1,10 @@
 
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Autoplay from "embla-carousel-autoplay";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +23,10 @@ import {
 import { ArrowRight, Users, Mic, Music2 } from "lucide-react";
 
 export default function Home() {
+  const plugin = React.useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: true })
+  );
+
   const communitySections = [
     {
       title: "Semente da Fé",
@@ -52,6 +60,9 @@ export default function Home() {
       <section className="container -mt-8">
         <Carousel
           className="w-full"
+          plugins={[plugin.current]}
+          onMouseEnter={plugin.current.stop}
+          onMouseLeave={plugin.current.reset}
           opts={{
             loop: true,
           }}
