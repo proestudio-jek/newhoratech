@@ -186,9 +186,16 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
           <CardHeader className="pb-3 border-b bg-muted/30">
             <CardTitle className="flex items-center gap-2 text-primary">
               <CalendarHeart className="h-5 w-5" />
-              <span className="text-base sm:text-lg">
-                {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-base sm:text-lg">
+                  {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
+                </span>
+                {selectedEvent?.title && (
+                  <span className="text-xs sm:text-sm font-bold text-amber-600 animate-in fade-in slide-in-from-left-2 duration-300">
+                    {selectedEvent.title}
+                  </span>
+                )}
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
@@ -196,7 +203,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
             {/* Seção do Evento do Dia */}
             <div className="space-y-3 pb-2">
               <div className="flex items-center gap-2 text-amber-600 font-bold text-sm uppercase tracking-wider">
-                <Star className="h-4 w-4 fill-amber-600" /> Evento do Dia
+                <Star className="h-4 w-4 fill-amber-600" /> Nome do Evento
               </div>
               {isAdmin ? (
                 <div className="flex gap-2">
