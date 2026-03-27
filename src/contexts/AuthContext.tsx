@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { toast } = useToast();
 
-  const isCentralAdmin = user?.email === CENTRAL_ADMIN_EMAIL;
+  const isCentralAdmin = user?.email?.toLowerCase() === CENTRAL_ADMIN_EMAIL.toLowerCase();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
@@ -71,8 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(newUser);
       setInitialLoading(false);
       
-      // Só permite isAdmin ser verdadeiro se for o e-mail central
-      if (newUser?.email === CENTRAL_ADMIN_EMAIL) {
+      const checkAdmin = newUser?.email?.toLowerCase() === CENTRAL_ADMIN_EMAIL.toLowerCase();
+      
+      if (checkAdmin) {
         setIsAdmin(true);
       } else {
         setIsAdmin(false);

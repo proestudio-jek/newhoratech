@@ -8,7 +8,7 @@ service cloud.firestore {
     }
 
     function isCentralAdmin() {
-      return isSignedIn() && request.auth.token.email == 'jeffersonnascimentoone@outlook.com';
+      return isSignedIn() && request.auth.token.email.lower() == 'jeffersonnascimentoone@outlook.com';
     }
 
     function isApprovedSoloist() {

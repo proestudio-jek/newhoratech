@@ -83,13 +83,14 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
     setEventTitle(selectedEvent?.title || "");
   }, [selectedEvent, date]);
 
-  const handleSaveEvent = async () => {
-    if (!date || !db || !eventsColRef || !isAdmin) return;
+  const handleSaveEvent = () => {
+    if (!date || !db || !isAdmin) return;
     
     setIsSavingEvent(true);
-    const eventId = targetConjunto 
-      ? `event-${targetConjunto}-${selectedDateStr}` 
-      : `event-global-${selectedDateStr}`;
+    
+    // Normaliza o nome do conjunto para o ID do documento
+    const conjuntoId = (targetConjunto || "Geral").replace(/\s+/g, "-").toLowerCase();
+    const eventId = `event-${conjuntoId}-${selectedDateStr}`;
     
     const docRef = doc(db, "calendarEvents", eventId);
     
@@ -100,21 +101,15 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
       createdAt: serverTimestamp(),
     };
 
-    try {
-      setDocumentNonBlocking(docRef, eventData, { merge: true });
+    setDocumentNonBlocking(docRef, eventData, { merge: true });
+    
+    setTimeout(() => {
+      setIsSavingEvent(false);
       toast({
         title: "Evento Salvo",
-        description: `O evento para ${format(date, "dd/MM")} foi atualizado com sucesso.`
+        description: `O evento para ${format(date, "dd/MM")} foi atualizado.`
       });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
-        description: "Ocorreu um problema ao tentar salvar o evento."
-      });
-    } finally {
-      setIsSavingEvent(false);
-    }
+    }, 500);
   };
 
   const handleAddHymn = (hymn: Omit<Hymn, "id">) => {
@@ -196,7 +191,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
         </Card>
       </div>
 
-      {/* Painel de Detalhes (Evento e Hinos) - Sempre visível para todos */}
+      {/* Painel de Detalhes (Evento e Hinos) */}
       <div className="md:col-span-5 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
         <Card className="shadow-md border-primary/20 bg-white overflow-hidden h-full">
           <CardHeader className="bg-primary text-primary-foreground py-4">
@@ -212,7 +207,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
           
           <CardContent className="space-y-6 pt-6">
             
-            {/* Seção do Evento do Dia - Visível para todos */}
+            {/* Seção do Evento do Dia */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-amber-600 font-bold text-sm uppercase tracking-wider">
@@ -262,7 +257,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
               </div>
             </div>
 
-            {/* Seção da Escala de Hinos - Visível para todos */}
+            {/* Seção da Escala de Hinos */}
             <div className="space-y-3 pt-2 border-t">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
