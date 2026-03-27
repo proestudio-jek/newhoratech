@@ -3,11 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // REGRAS DE SEGURANÇA - PROMUSIC (VERSÃO ATUALIZADA COM APROVAÇÕES)
-    // Gatilho de Implantação: 2025-05-27 20:45 (GMT)
-    
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    function isCentralAdmin() {
+      return isSignedIn() && request.auth.token.email == 'jeffersonnascimentoone@outlook.com';
     }
 
     function isApprovedSoloist() {
@@ -15,10 +16,10 @@ service cloud.firestore {
       return isSignedIn() && userDoc.data.status == 'approved';
     }
 
-    // Conteúdo Público: Leitura irrestrita. Escrita restrita.
+    // Conteúdo Público: Leitura irrestrita.
     match /community-news/{id=**} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isCentralAdmin();
     }
     
     match /community-playlist/{id=**} {
@@ -28,40 +29,38 @@ service cloud.firestore {
 
     match /community-videos/{id=**} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isCentralAdmin();
     }
 
     match /calendarEntries/{id=**} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isCentralAdmin();
+    }
+
+    match /calendarEvents/{id=**} {
+      allow read: if true;
+      allow write: if isCentralAdmin();
     }
 
     match /hymns/{id=**} {
       allow read: if true;
-      allow write: if isSignedIn();
+      allow write: if isCentralAdmin();
     }
 
     match /solistaHymns/{id=**} {
       allow read: if true;
-      allow create: if isApprovedSoloist();
-      allow update, delete: if isApprovedSoloist() && (
-        resource == null || resource.data.solistaId == request.auth.uid
-      );
+      allow create: if isApprovedSoloist() || isCentralAdmin();
+      allow update, delete: if isCentralAdmin() || (isApprovedSoloist() && resource.data.solistaId == request.auth.uid);
     }
 
-    // Perfil de usuário: O dono pode ler/escrever. Status só pode ser alterado via backend/admin se necessário, 
-    // mas aqui permitimos que o dono crie o perfil inicial.
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (
-        request.auth.uid == userId ||
-        // Permitir que admins aprovem (embora usemos o console ou modo admin local)
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'role'])
-      );
+      allow write: if isSignedIn() && (request.auth.uid == userId || isCentralAdmin());
     }
 
     match /{allPaths=**} {
-      allow read, write: if false;
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

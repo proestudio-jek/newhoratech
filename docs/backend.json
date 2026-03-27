@@ -42,6 +42,19 @@
       },
       "required": ["date", "hymnTitle", "conjunto"]
     },
+    "CalendarEvent": {
+      "title": "CalendarEvent",
+      "type": "object",
+      "description": "Título do evento ou culto em uma data específica.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "title": { "type": "string" },
+        "conjunto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["date", "title"]
+    },
     "NewsArticle": {
       "title": "NewsArticle",
       "type": "object",
@@ -103,6 +116,7 @@
     "/hymns/{hymnId}": { "schema": { "$ref": "#/backend/entities/Hymn" }, "description": "Hinos base." },
     "/solistaHymns/{hymnId}": { "schema": { "$ref": "#/backend/entities/SolistaHymn" }, "description": "Hinos de solistas." },
     "/calendarEntries/{entryId}": { "schema": { "$ref": "#/backend/entities/CalendarEntry" }, "description": "Entradas do calendário." },
+    "/calendarEvents/{eventId}": { "schema": { "$ref": "#/backend/entities/CalendarEvent" }, "description": "Eventos de data no calendário." },
     "/community-news/{newsId}": { "schema": { "$ref": "#/backend/entities/NewsArticle" }, "description": "Notícias dos conjuntos." },
     "/community-videos/{videoId}": { "schema": { "$ref": "#/backend/entities/CommunityVideo" }, "description": "Vídeos dos conjuntos." },
     "/community-playlist/{playlistId}": { "schema": { "$ref": "#/backend/entities/PlaylistItem" }, "description": "Playlists dos conjuntos." },

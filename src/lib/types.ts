@@ -25,6 +25,14 @@ export type CalendarEntry = {
   createdAt: any;
 };
 
+export type CalendarEvent = {
+  id: string;
+  date: any;
+  title: string;
+  conjunto?: string;
+  createdAt: any;
+};
+
 export type CommunityVideo = {
   id: string;
   youtubeId: string;

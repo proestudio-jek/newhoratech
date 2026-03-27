@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,14 +7,16 @@ import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, query, doc, serverTimestamp, Timestamp, where } from "firebase/firestore";
-import type { CalendarEntry, Hymn } from "@/lib/types";
-import { Music, PlusCircle, Trash2, CalendarHeart, Loader2, BookmarkCheck } from "lucide-react";
+import type { CalendarEntry, CalendarEvent, Hymn } from "@/lib/types";
+import { Music, PlusCircle, Trash2, CalendarHeart, Loader2, BookmarkCheck, Star, Edit3, Save } from "lucide-react";
 import { HymnSuggestionModal } from "./hymn-suggestion-modal";
 import { DayContent as DayPickerDayContent } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 interface HymnCalendarProps {
   targetConjunto?: string;
@@ -22,10 +25,11 @@ interface HymnCalendarProps {
 export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [eventTitle, setEventTitle] = useState("");
   const { user, isAdmin } = useAuth();
   const db = useFirestore();
+  const { toast } = useToast();
 
-  // Fix hydration mismatch by setting initial date on mount
   useEffect(() => {
     setDate(new Date());
   }, []);
@@ -33,6 +37,11 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
   const calendarColRef = useMemoFirebase(() => {
     if (!db) return null;
     return collection(db, "calendarEntries");
+  }, [db]);
+
+  const eventsColRef = useMemoFirebase(() => {
+    if (!db) return null;
+    return collection(db, "calendarEvents");
   }, [db]);
 
   const calendarQuery = useMemoFirebase(() => {
@@ -43,7 +52,16 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
     return query(calendarColRef);
   }, [calendarColRef, targetConjunto]);
 
-  const { data: allEntries, isLoading } = useCollection<CalendarEntry>(calendarQuery);
+  const eventsQuery = useMemoFirebase(() => {
+    if (!eventsColRef) return null;
+    if (targetConjunto) {
+      return query(eventsColRef, where("conjunto", "==", targetConjunto));
+    }
+    return query(eventsColRef);
+  }, [eventsColRef, targetConjunto]);
+
+  const { data: allEntries, isLoading: loadingEntries } = useCollection<CalendarEntry>(calendarQuery);
+  const { data: allEvents, isLoading: loadingEvents } = useCollection<CalendarEvent>(eventsQuery);
 
   const selectedDateStr = date ? format(date, "yyyy-MM-dd") : "";
   
@@ -52,6 +70,39 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
     const entryDate = entry.date instanceof Timestamp ? entry.date.toDate() : new Date(entry.date);
     return format(entryDate, "yyyy-MM-dd") === selectedDateStr;
   }) || [];
+
+  const selectedEvent = allEvents?.find(event => {
+    if (!event.date) return false;
+    const eventDate = event.date instanceof Timestamp ? event.date.toDate() : new Date(event.date);
+    return format(eventDate, "yyyy-MM-dd") === selectedDateStr;
+  });
+
+  useEffect(() => {
+    setEventTitle(selectedEvent?.title || "");
+  }, [selectedEvent, date]);
+
+  const handleSaveEvent = () => {
+    if (!date || !db || !eventsColRef) return;
+    
+    const eventId = targetConjunto 
+      ? `event-${targetConjunto}-${selectedDateStr}` 
+      : `event-global-${selectedDateStr}`;
+    
+    const docRef = doc(db, "calendarEvents", eventId);
+    
+    const eventData = {
+      title: eventTitle,
+      date: Timestamp.fromDate(date),
+      conjunto: targetConjunto || "Geral",
+      createdAt: serverTimestamp(),
+    };
+
+    setDocumentNonBlocking(docRef, eventData, { merge: true });
+    toast({
+      title: "Evento Atualizado",
+      description: `O nome do evento para ${format(date, "dd/MM")} foi salvo.`
+    });
+  };
 
   const handleAddHymn = (hymn: Omit<Hymn, "id">) => {
     if (!date || !calendarColRef) return;
@@ -74,7 +125,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
     deleteDocumentNonBlocking(docRef);
   };
 
-  if (isLoading) {
+  if (loadingEntries || loadingEvents) {
     return (
       <div className="flex h-64 items-center justify-center rounded-lg border-2 border-dashed">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -111,11 +162,15 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                     const entryDate = entry.date instanceof Timestamp ? entry.date.toDate() : new Date(entry.date);
                     return format(entryDate, "yyyy-MM-dd") === dateStr;
                   });
+                  const hasEvent = allEvents?.some(event => {
+                    const eventDate = event.date instanceof Timestamp ? event.date.toDate() : new Date(event.date);
+                    return format(eventDate, "yyyy-MM-dd") === dateStr;
+                  });
                   return (
                     <div className="relative h-full w-full flex items-center justify-center">
                       <DayPickerDayContent {...props} />
-                      {hasHymns && (
-                        <div className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></div>
+                      {(hasHymns || hasEvent) && (
+                        <div className={`absolute bottom-1 h-1.5 w-1.5 rounded-full animate-pulse ${hasEvent ? 'bg-amber-500' : 'bg-primary'}`}></div>
                       )}
                     </div>
                   );
@@ -137,6 +192,37 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
+            
+            {/* Seção do Evento do Dia */}
+            <div className="space-y-3 pb-2">
+              <div className="flex items-center gap-2 text-amber-600 font-bold text-sm uppercase tracking-wider">
+                <Star className="h-4 w-4 fill-amber-600" /> Evento do Dia
+              </div>
+              {isAdmin ? (
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Ex: Culto de Jovens..." 
+                    value={eventTitle}
+                    onChange={(e) => setEventTitle(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                  <Button size="sm" variant="secondary" onClick={handleSaveEvent} title="Salvar Evento">
+                    <Save className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : selectedEvent?.title ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-900 font-semibold shadow-sm animate-in fade-in zoom-in duration-300">
+                  {selectedEvent.title}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">Nenhum evento especial registrado.</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider mt-4">
+              <Music className="h-4 w-4" /> Escala de Hinos
+            </div>
+
             {selectedHymns.length > 0 ? (
               <ul className="space-y-3">
                 {selectedHymns.map((hymn) => (
@@ -147,7 +233,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2">
-                           {hymn.musicUrl && <Music className="h-3.5 w-3.5 text-primary flex-shrink-0" />}
+                           <Music className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                            <span className="font-bold text-sm sm:text-base text-foreground truncate">{hymn.hymnTitle}</span>
                         </div>
                         {!targetConjunto && hymn.conjunto && (
@@ -156,7 +242,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                           </Badge>
                         )}
                       </div>
-                      {user && isAdmin && (
+                      {isAdmin && (
                         <button
                           onClick={() => handleRemoveHymn(hymn.id)}
                           className="text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-colors flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
@@ -170,14 +256,14 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                 ))}
               </ul>
             ) : (
-              <div className="text-center text-muted-foreground py-12 px-4 border-2 border-dashed rounded-xl">
-                <Music className="mx-auto h-10 w-10 opacity-10 mb-2" />
-                <p className="text-xs sm:text-sm">Nenhum hino agendado para este dia.</p>
+              <div className="text-center text-muted-foreground py-10 px-4 border-2 border-dashed rounded-xl">
+                <Music className="mx-auto h-8 w-8 opacity-10 mb-2" />
+                <p className="text-xs">Nenhum hino agendado.</p>
               </div>
             )}
-            {user && isAdmin && date && (
+            {isAdmin && date && (
               <Button
-                className="w-full shadow-sm"
+                className="w-full shadow-sm mt-2"
                 onClick={() => setIsModalOpen(true)}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -187,7 +273,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
           </CardContent>
         </Card>
       </div>
-      {user && isAdmin && date && (
+      {isAdmin && date && (
         <HymnSuggestionModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
