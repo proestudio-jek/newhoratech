@@ -11,12 +11,12 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, query, doc, serverTimestamp, Timestamp, where } from "firebase/firestore";
-import type { CalendarEntry, CalendarEvent, Hymn } from "@/lib/types";
-import { Music, PlusCircle, Trash2, CalendarHeart, Loader2, BookmarkCheck, Star, Save, CalendarPlus } from "lucide-react";
+import { Music, PlusCircle, Trash2, CalendarHeart, Loader2, BookmarkCheck, Star, Save, CalendarPlus, Edit, Info } from "lucide-react";
 import { HymnSuggestionModal } from "./hymn-suggestion-modal";
 import { DayContent as DayPickerDayContent } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import type { CalendarEntry, CalendarEvent, Hymn } from "@/lib/types";
 
 interface HymnCalendarProps {
   targetConjunto?: string;
@@ -146,8 +146,9 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-      <div className="md:col-span-2">
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
+      {/* Calendário Principal */}
+      <div className="md:col-span-7">
         <Card className="overflow-hidden shadow-lg border-primary/10">
            <CardHeader className="bg-primary/5 pb-4">
              <CardTitle className="text-xl flex items-center gap-2">
@@ -155,9 +156,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                {targetConjunto ? `Calendário - ${targetConjunto}` : "Calendário Central de Hinos"}
              </CardTitle>
              <CardDescription>
-               {targetConjunto 
-                 ? `Visualize as escalas específicas do conjunto ${targetConjunto}.` 
-                 : "Consolidado de todas as escalas e apresentações de todos os conjuntos."}
+               Selecione uma data para visualizar os detalhes.
              </CardDescription>
            </CardHeader>
           <CardContent className="p-0 sm:p-4">
@@ -193,114 +192,141 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
         </Card>
       </div>
 
-      <div className="md:col-span-1">
-        <Card className="sticky top-20 shadow-md border-primary/20 bg-white">
-          <CardHeader className="pb-3 border-b bg-muted/30">
-            <CardTitle className="flex flex-col gap-1 text-primary">
-              <div className="flex items-center gap-2">
-                <CalendarHeart className="h-5 w-5" />
-                <span className="text-base sm:text-lg">
+      {/* Painel de Detalhes (Evento e Hinos) */}
+      <div className="md:col-span-5 space-y-6">
+        <Card className="shadow-md border-primary/20 bg-white overflow-hidden">
+          <CardHeader className="bg-primary text-primary-foreground py-4">
+            <div className="flex items-center gap-3">
+              <CalendarHeart className="h-6 w-6" />
+              <div>
+                <CardTitle className="text-lg sm:text-xl">
                   {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
-                </span>
+                </CardTitle>
               </div>
-              {selectedEvent?.title && (
-                <div className="flex items-center gap-1 text-xs font-bold text-amber-600 animate-in fade-in slide-in-from-left-2 duration-300">
-                  <Star className="h-3 w-3 fill-amber-600" />
-                  {selectedEvent.title}
-                </div>
-              )}
-            </CardTitle>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4 pt-4">
+          
+          <CardContent className="space-y-6 pt-6">
             
             {/* Seção do Evento do Dia */}
-            <div className="space-y-3 pb-2">
-              <div className="flex items-center gap-2 text-amber-600 font-bold text-sm uppercase tracking-wider">
-                <Star className="h-4 w-4 fill-amber-600" /> Evento Especial
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-amber-600 font-bold text-sm uppercase tracking-wider">
+                  <Star className="h-4 w-4 fill-amber-600" /> Evento do Dia
+                </div>
+                {isAdmin && (
+                  <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-200 text-amber-600">
+                    Modo Editor
+                  </Badge>
+                )}
               </div>
+
               {isAdmin ? (
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center bg-amber-50/50 p-3 rounded-lg border border-amber-100 shadow-inner">
                   <Input 
                     placeholder="Nome do Evento (ex: Culto de Jovens)" 
                     value={eventTitle}
                     onChange={(e) => setEventTitle(e.target.value)}
-                    className="h-9 text-sm focus-visible:ring-amber-500"
+                    className="h-10 text-sm bg-white border-amber-200 focus-visible:ring-amber-500"
                   />
                   <Button 
-                    size="sm" 
-                    variant="secondary" 
+                    size="icon" 
                     onClick={handleSaveEvent} 
                     disabled={isSavingEvent}
-                    className="bg-amber-100 hover:bg-amber-200 text-amber-700"
-                    title="Salvar Nome do Evento"
+                    className="bg-amber-500 hover:bg-amber-600 shrink-0 shadow-md"
+                    title="Salvar Evento"
                   >
-                    {isSavingEvent ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {isSavingEvent ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-5 w-5" />}
                   </Button>
                 </div>
-              ) : selectedEvent?.title ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-900 font-semibold shadow-sm animate-in fade-in zoom-in duration-300">
-                  {selectedEvent.title}
-                </div>
               ) : (
-                <p className="text-xs text-muted-foreground italic">Nenhum evento especial registrado.</p>
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 shadow-sm min-h-[60px] flex items-center justify-center text-center animate-in fade-in zoom-in duration-300">
+                  {selectedEvent?.title ? (
+                    <span className="text-amber-900 font-black text-lg">{selectedEvent.title}</span>
+                  ) : (
+                    <span className="text-amber-700/50 italic text-sm">Nenhum evento especial registrado para esta data.</span>
+                  )}
+                </div>
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider mt-4">
-              <Music className="h-4 w-4" /> Escala de Hinos
-            </div>
+            {/* Seção da Escala de Hinos */}
+            <div className="space-y-3 pt-2 border-t">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
+                  <Music className="h-4 w-4" /> Escala de Hinos
+                </div>
+              </div>
 
-            {selectedHymns.length > 0 ? (
-              <ul className="space-y-3">
-                {selectedHymns.map((hymn) => (
-                  <li
-                    key={hymn.id}
-                    className="flex flex-col gap-2 rounded-lg border p-3 bg-muted/10 hover:bg-muted/20 transition-colors relative group"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-2">
-                           <Music className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                           <span className="font-bold text-sm sm:text-base text-foreground truncate">{hymn.hymnTitle}</span>
+              {selectedHymns.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedHymns.map((hymn) => (
+                    <div
+                      key={hymn.id}
+                      className="flex flex-col gap-2 rounded-xl border p-4 bg-muted/5 hover:bg-muted/10 transition-all shadow-sm relative group border-l-4 border-l-primary"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                             <div className="p-1.5 bg-primary/10 rounded-full">
+                               <Music className="h-4 w-4 text-primary" />
+                             </div>
+                             <span className="font-bold text-sm sm:text-base text-foreground truncate">{hymn.hymnTitle}</span>
+                          </div>
+                          {!targetConjunto && hymn.conjunto && (
+                            <Badge variant="secondary" className="mt-2 w-fit text-[10px] py-0 px-2 h-5 font-bold tracking-wider uppercase">
+                              {hymn.conjunto}
+                            </Badge>
+                          )}
                         </div>
-                        {!targetConjunto && hymn.conjunto && (
-                          <Badge variant="outline" className="mt-1 w-fit bg-primary/5 text-[10px] py-0 px-2 h-5 border-primary/20 text-primary uppercase font-bold tracking-wider">
-                            {hymn.conjunto}
-                          </Badge>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveHymn(hymn.id)}
+                            className="text-destructive hover:bg-destructive/10 shrink-0 h-9 w-9"
+                            aria-label={`Remover ${hymn.hymnTitle}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         )}
                       </div>
-                      {isAdmin && (
-                        <button
-                          onClick={() => handleRemoveHymn(hymn.id)}
-                          className="text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-colors flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                          aria-label={`Remover ${hymn.hymnTitle}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
                     </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-center text-muted-foreground py-10 px-4 border-2 border-dashed rounded-xl">
-                <Music className="mx-auto h-8 w-8 opacity-10 mb-2" />
-                <p className="text-xs">Nenhum hino agendado para esta data.</p>
-              </div>
-            )}
-            
-            {isAdmin && date && (
-              <Button
-                className="w-full shadow-sm mt-2"
-                onClick={() => setIsModalOpen(true)}
-              >
-                <CalendarPlus className="mr-2 h-4 w-4" />
-                Agendar Hino
-              </Button>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground py-8 px-4 border-2 border-dashed rounded-xl bg-muted/5">
+                  <Music className="mx-auto h-10 w-10 opacity-10 mb-3" />
+                  <p className="text-sm">Nenhum hino agendado para esta data.</p>
+                </div>
+              )}
+              
+              {isAdmin && date && (
+                <div className="pt-4 grid grid-cols-1 gap-3">
+                   <Button
+                    className="w-full shadow-md h-12 text-md font-bold transition-transform active:scale-95"
+                    onClick={() => setIsModalOpen(true)}
+                  >
+                    <CalendarPlus className="mr-2 h-5 w-5" />
+                    Agendar Novo Hino
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
+
+        {/* Info Adicional para Usuários */}
+        {!isAdmin && (
+           <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-xl border border-primary/10 text-primary/70">
+              <Info className="h-5 w-5 flex-shrink-0" />
+              <p className="text-xs leading-relaxed">
+                As escalas são atualizadas regularmente pela coordenação. Fique atento aos ensaios e avisos do seu conjunto.
+              </p>
+           </div>
+        )}
       </div>
+
       {isAdmin && date && (
         <HymnSuggestionModal
           isOpen={isModalOpen}
