@@ -11,12 +11,13 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, query, doc, serverTimestamp, Timestamp, where } from "firebase/firestore";
-import { Music, PlusCircle, Trash2, CalendarHeart, Loader2, BookmarkCheck, Star, Save, CalendarPlus, Edit, Info } from "lucide-react";
+import { Music, PlusCircle, Trash2, CalendarHeart, Loader2, BookmarkCheck, Star, Save, CalendarPlus, Edit, Info, Sparkles } from "lucide-react";
 import { HymnSuggestionModal } from "./hymn-suggestion-modal";
 import { DayContent as DayPickerDayContent } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import type { CalendarEntry, CalendarEvent, Hymn } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface HymnCalendarProps {
   targetConjunto?: string;
@@ -156,7 +157,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                {targetConjunto ? `Calendário - ${targetConjunto}` : "Calendário Central de Hinos"}
              </CardTitle>
              <CardDescription>
-               Selecione uma data para visualizar os detalhes.
+               Clique em um dia para ver os eventos e a escala de hinos.
              </CardDescription>
            </CardHeader>
           <CardContent className="p-0 sm:p-4">
@@ -181,7 +182,10 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                     <div className="relative h-full w-full flex items-center justify-center">
                       <DayPickerDayContent {...props} />
                       {(hasHymns || hasEvent) && (
-                        <div className={`absolute bottom-1 h-1.5 w-1.5 rounded-full animate-pulse ${hasEvent ? 'bg-amber-500' : 'bg-primary'}`}></div>
+                        <div className={cn(
+                          "absolute bottom-1 h-1.5 w-1.5 rounded-full animate-pulse",
+                          hasEvent ? 'bg-amber-500' : 'bg-primary'
+                        )}></div>
                       )}
                     </div>
                   );
@@ -192,9 +196,9 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
         </Card>
       </div>
 
-      {/* Painel de Detalhes (Evento e Hinos) */}
-      <div className="md:col-span-5 space-y-6">
-        <Card className="shadow-md border-primary/20 bg-white overflow-hidden">
+      {/* Painel de Detalhes (Evento e Hinos) - Sempre visível para todos */}
+      <div className="md:col-span-5 space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+        <Card className="shadow-md border-primary/20 bg-white overflow-hidden h-full">
           <CardHeader className="bg-primary text-primary-foreground py-4">
             <div className="flex items-center gap-3">
               <CalendarHeart className="h-6 w-6" />
@@ -208,11 +212,11 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
           
           <CardContent className="space-y-6 pt-6">
             
-            {/* Seção do Evento do Dia */}
+            {/* Seção do Evento do Dia - Visível para todos */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-amber-600 font-bold text-sm uppercase tracking-wider">
-                  <Star className="h-4 w-4 fill-amber-600" /> Evento do Dia
+                  <Star className="h-4 w-4 fill-amber-600" /> Evento Especial
                 </div>
                 {isAdmin && (
                   <Badge variant="outline" className="text-[10px] bg-amber-50 border-amber-200 text-amber-600">
@@ -221,36 +225,44 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                 )}
               </div>
 
-              {isAdmin ? (
-                <div className="flex gap-2 items-center bg-amber-50/50 p-3 rounded-lg border border-amber-100 shadow-inner">
-                  <Input 
-                    placeholder="Nome do Evento (ex: Culto de Jovens)" 
-                    value={eventTitle}
-                    onChange={(e) => setEventTitle(e.target.value)}
-                    className="h-10 text-sm bg-white border-amber-200 focus-visible:ring-amber-500"
-                  />
-                  <Button 
-                    size="icon" 
-                    onClick={handleSaveEvent} 
-                    disabled={isSavingEvent}
-                    className="bg-amber-500 hover:bg-amber-600 shrink-0 shadow-md"
-                    title="Salvar Evento"
-                  >
-                    {isSavingEvent ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-5 w-5" />}
-                  </Button>
-                </div>
-              ) : (
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 shadow-sm min-h-[60px] flex items-center justify-center text-center animate-in fade-in zoom-in duration-300">
-                  {selectedEvent?.title ? (
-                    <span className="text-amber-900 font-black text-lg">{selectedEvent.title}</span>
-                  ) : (
-                    <span className="text-amber-700/50 italic text-sm">Nenhum evento especial registrado para esta data.</span>
-                  )}
-                </div>
-              )}
+              <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-5 shadow-sm min-h-[80px] flex flex-col items-center justify-center text-center transition-all">
+                {selectedEvent?.title ? (
+                  <div className="space-y-1">
+                    <span className="text-amber-900 font-black text-xl leading-tight block">
+                      {selectedEvent.title}
+                    </span>
+                    {!targetConjunto && selectedEvent.conjunto && (
+                      <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
+                        {selectedEvent.conjunto}
+                      </Badge>
+                    )}
+                  </div>
+                ) : !isAdmin && (
+                  <span className="text-amber-700/40 italic text-sm">Não há um evento especial registrado.</span>
+                )}
+
+                {isAdmin && (
+                  <div className="mt-4 flex gap-2 w-full">
+                    <Input 
+                      placeholder="Editar nome do evento..." 
+                      value={eventTitle}
+                      onChange={(e) => setEventTitle(e.target.value)}
+                      className="h-10 text-sm bg-white border-amber-200 focus-visible:ring-amber-500"
+                    />
+                    <Button 
+                      size="icon" 
+                      onClick={handleSaveEvent} 
+                      disabled={isSavingEvent}
+                      className="bg-amber-500 hover:bg-amber-600 shrink-0 shadow-md"
+                    >
+                      {isSavingEvent ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-5 w-5" />}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Seção da Escala de Hinos */}
+            {/* Seção da Escala de Hinos - Visível para todos */}
             <div className="space-y-3 pt-2 border-t">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
@@ -274,9 +286,11 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                              <span className="font-bold text-sm sm:text-base text-foreground truncate">{hymn.hymnTitle}</span>
                           </div>
                           {!targetConjunto && hymn.conjunto && (
-                            <Badge variant="secondary" className="mt-2 w-fit text-[10px] py-0 px-2 h-5 font-bold tracking-wider uppercase">
-                              {hymn.conjunto}
-                            </Badge>
+                            <div className="mt-2 flex items-center gap-2">
+                              <Badge variant="secondary" className="text-[10px] py-0 px-2 h-5 font-bold tracking-wider uppercase">
+                                {hymn.conjunto}
+                              </Badge>
+                            </div>
                           )}
                         </div>
                         {isAdmin && (
@@ -284,8 +298,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleRemoveHymn(hymn.id)}
-                            className="text-destructive hover:bg-destructive/10 shrink-0 h-9 w-9"
-                            aria-label={`Remover ${hymn.hymnTitle}`}
+                            className="text-destructive hover:bg-destructive/10 shrink-0 h-9 w-9 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -295,36 +308,26 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
                   ))}
                 </div>
               ) : (
-                <div className="text-center text-muted-foreground py-8 px-4 border-2 border-dashed rounded-xl bg-muted/5">
-                  <Music className="mx-auto h-10 w-10 opacity-10 mb-3" />
-                  <p className="text-sm">Nenhum hino agendado para esta data.</p>
+                <div className="text-center text-muted-foreground py-10 px-4 border-2 border-dashed rounded-xl bg-muted/5">
+                  <Music className="mx-auto h-12 w-12 opacity-10 mb-3" />
+                  <p className="text-sm">Ainda não há hinos agendados.</p>
                 </div>
               )}
               
               {isAdmin && date && (
-                <div className="pt-4 grid grid-cols-1 gap-3">
+                <div className="pt-4">
                    <Button
-                    className="w-full shadow-md h-12 text-md font-bold transition-transform active:scale-95"
+                    className="w-full shadow-md h-12 text-md font-bold transition-all active:scale-95 bg-primary hover:bg-primary/90"
                     onClick={() => setIsModalOpen(true)}
                   >
                     <CalendarPlus className="mr-2 h-5 w-5" />
-                    Agendar Novo Hino
+                    Gerenciar Escala
                   </Button>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
-
-        {/* Info Adicional para Usuários */}
-        {!isAdmin && (
-           <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-xl border border-primary/10 text-primary/70">
-              <Info className="h-5 w-5 flex-shrink-0" />
-              <p className="text-xs leading-relaxed">
-                As escalas são atualizadas regularmente pela coordenação. Fique atento aos ensaios e avisos do seu conjunto.
-              </p>
-           </div>
-        )}
       </div>
 
       {isAdmin && date && (
