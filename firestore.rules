@@ -19,7 +19,8 @@ service cloud.firestore {
     // Conteúdo Público: Leitura irrestrita.
     match /community-news/{id=**} {
       allow read: if true;
-      allow write: if isCentralAdmin();
+      allow create: if isCentralAdmin() || isApprovedSoloist();
+      allow update, delete: if isCentralAdmin() || (isApprovedSoloist() && resource.data.authorId == request.auth.uid);
     }
     
     match /community-playlist/{id=**} {

@@ -26,11 +26,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Trash2, Newspaper, Loader2 } from "lucide-react";
+import { PlusCircle, Trash2, Newspaper, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { NewsArticle } from "@/lib/types";
+import type { NewsArticle, UserProfile } from "@/lib/types";
 import { collection, query, orderBy, serverTimestamp, doc, Timestamp, where } from "firebase/firestore";
-import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from "@/firebase";
+import { useFirestore, useCollection, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase, useDoc } from "@/firebase";
 
 const formSchema = z.object({
   title: z.string().min(5, "O título deve ter pelo menos 5 caracteres."),
@@ -47,6 +47,12 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, "users", user.uid);
+  }, [db, user]);
+  const { data: profile } = useDoc<UserProfile>(userProfileRef);
+
   const newsCollectionRef = useMemoFirebase(() => {
     if (!db) return null;
     return collection(db, "community-news");
@@ -71,6 +77,8 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
     },
   });
 
+  const canPostNews = isAdmin || (profile?.status === 'approved' && profile?.conjunto === targetConjunto);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !newsCollectionRef) return;
 
@@ -79,6 +87,7 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
       content: values.content,
       date: serverTimestamp(),
       authorId: user.uid,
+      authorName: profile?.username || user.email,
       conjunto: targetConjunto,
     };
 
@@ -87,17 +96,19 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
     setIsAdding(false);
     toast({
         title: "Notícia Publicada!",
-        description: `O artigo "${values.title}" foi publicado em ${targetConjunto}.`,
+        description: `O aviso "${values.title}" agora está visível para todos os membros do conjunto ${targetConjunto}.`,
     });
   }
   
-  const handleRemoveArticle = async (id: string) => {
+  const handleRemoveArticle = async (id: string, authorId?: string) => {
     if (!db) return;
+    
+    // Apenas admin central ou o próprio autor pode remover (reforçado pelas rules)
     const docRef = doc(db, "community-news", id);
     deleteDocumentNonBlocking(docRef);
     toast({
         title: "Notícia Removida",
-        description: "O artigo foi removido."
+        description: "O aviso foi removido do mural."
     });
   }
 
@@ -111,22 +122,25 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
 
   return (
     <div className="space-y-6">
-        {user && isAdmin && (
+        {user && canPostNews && (
             <div className="flex justify-end">
                 {!isAdding ? (
-                    <Button onClick={() => setIsAdding(true)}>
+                    <Button onClick={() => setIsAdding(true)} className="shadow-md">
                         <PlusCircle className="mr-2 h-4 w-4"/>
-                        Adicionar Notícia
+                        Adicionar Aviso
                     </Button>
                 ) : (
-                    <Card className="w-full">
-                        <CardHeader>
-                            <CardTitle>Publicar Nova Notícia</CardTitle>
+                    <Card className="w-full border-primary/20 shadow-lg animate-in fade-in slide-in-from-top-4 duration-300">
+                        <CardHeader className="bg-primary/5">
+                            <CardTitle className="flex items-center gap-2">
+                                <Newspaper className="h-5 w-5 text-primary" />
+                                Publicar Novo Aviso
+                            </CardTitle>
                             <CardDescription>
-                            Escreva e publique uma nova notícia para o conjunto {targetConjunto}.
+                            Esta notícia ficará visível na aba de Notícias do conjunto {targetConjunto}.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-6">
                             <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                                 <FormField
@@ -134,9 +148,9 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
                                 name="title"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Título da Notícia</FormLabel>
+                                    <FormLabel>Título do Aviso</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Ex: Próximo Ensaio do Coral" {...field} />
+                                        <Input placeholder="Ex: Ensaio Geral no Próximo Sábado" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
@@ -147,17 +161,17 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
                                 name="content"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Conteúdo da Notícia</FormLabel>
+                                    <FormLabel>Descrição Completa</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Descreva os detalhes da notícia aqui..." {...field} rows={5} />
+                                        <Textarea placeholder="Descreva os detalhes importantes aqui..." {...field} rows={6} />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
                                 )}
                                 />
-                                <div className="flex flex-col sm:flex-row justify-end gap-2">
+                                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                                     <Button type="button" variant="ghost" onClick={() => setIsAdding(false)}>Cancelar</Button>
-                                    <Button type="submit">Publicar</Button>
+                                    <Button type="submit">Publicar no Mural</Button>
                                 </div>
                             </form>
                             </Form>
@@ -177,25 +191,33 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
                 : null;
             
             const isDateValid = articleDate && !isNaN(articleDate.getTime());
+            const canDelete = isAdmin || (user?.uid === (article as any).authorId);
 
             return (
-              <Card key={article.id} className="group relative">
-                <CardHeader>
-                  <CardTitle className="text-xl sm:text-2xl">{article.title}</CardTitle>
-                  <CardDescription>
-                    Publicado em {isDateValid ? format(articleDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Data pendente'}
-                  </CardDescription>
+              <Card key={article.id} className="group relative border-l-4 border-l-primary hover:shadow-md transition-all animate-in fade-in duration-500">
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-xl sm:text-2xl text-primary">{article.title}</CardTitle>
+                      <CardDescription className="flex items-center gap-2 mt-1">
+                        <span className="font-semibold text-foreground/70">
+                          Publicado em {isDateValid ? format(articleDate, "dd 'de' MMMM", { locale: ptBR }) : 'Agora mesmo'}
+                        </span>
+                        {isAdmin && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded uppercase">Admin</span>}
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed">{article.content}</p>
+                  <p className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed text-foreground/80">{article.content}</p>
                 </CardContent>
-                {user && isAdmin && (
+                {canDelete && (
                   <Button
-                      variant="destructive"
+                      variant="ghost"
                       size="icon"
-                      onClick={() => handleRemoveArticle(article.id)}
+                      onClick={() => handleRemoveArticle(article.id, (article as any).authorId)}
                       aria-label={`Remover Notícia`}
-                      className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                      className="absolute top-4 right-4 text-destructive hover:bg-destructive/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   >
                       <Trash2 className="h-4 w-4" />
                   </Button>
@@ -205,11 +227,15 @@ export function CommunityNews({ targetConjunto }: CommunityNewsProps) {
           })}
         </div>
       ) : (
-        <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed">
-            <div className="text-center text-muted-foreground p-4">
-                <Newspaper className="mx-auto h-12 w-12 mb-4 opacity-20"/>
-                <h2 className="text-xl font-semibold">Nenhuma Notícia Publicada</h2>
-                {isAdmin ? <p className="text-sm">Adicione a primeira notícia no botão acima.</p> : <p className="text-sm">Ainda não há notícias para este conjunto.</p>}
+        <div className="flex flex-col items-center justify-center h-64 rounded-xl border-2 border-dashed bg-muted/20">
+            <div className="text-center text-muted-foreground p-6">
+                <Newspaper className="mx-auto h-16 w-16 mb-4 opacity-10 text-primary"/>
+                <h2 className="text-xl font-semibold text-foreground/70">Nenhum Aviso no Momento</h2>
+                <p className="text-sm max-w-xs mx-auto mt-2">
+                    {canPostNews 
+                        ? "Utilize o botão acima para publicar o primeiro aviso para este conjunto." 
+                        : "Acompanhe esta aba para ficar por dentro das novidades e escalas do conjunto."}
+                </p>
             </div>
         </div>
       )}
