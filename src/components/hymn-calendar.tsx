@@ -9,10 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, query, doc, serverTimestamp, Timestamp, where } from "firebase/firestore";
 import type { CalendarEntry, CalendarEvent, Hymn } from "@/lib/types";
-import { Music, PlusCircle, Trash2, CalendarHeart, Loader2, BookmarkCheck, Star, Edit3, Save } from "lucide-react";
+import { Music, PlusCircle, Trash2, CalendarHeart, Loader2, BookmarkCheck, Star, Save, CalendarPlus } from "lucide-react";
 import { HymnSuggestionModal } from "./hymn-suggestion-modal";
 import { DayContent as DayPickerDayContent } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventTitle, setEventTitle] = useState("");
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
   const { user, isAdmin } = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
@@ -81,9 +82,10 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
     setEventTitle(selectedEvent?.title || "");
   }, [selectedEvent, date]);
 
-  const handleSaveEvent = () => {
-    if (!date || !db || !eventsColRef) return;
+  const handleSaveEvent = async () => {
+    if (!date || !db || !eventsColRef || !isAdmin) return;
     
+    setIsSavingEvent(true);
     const eventId = targetConjunto 
       ? `event-${targetConjunto}-${selectedDateStr}` 
       : `event-global-${selectedDateStr}`;
@@ -97,11 +99,21 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
       createdAt: serverTimestamp(),
     };
 
-    setDocumentNonBlocking(docRef, eventData, { merge: true });
-    toast({
-      title: "Evento Atualizado",
-      description: `O nome do evento para ${format(date, "dd/MM")} foi salvo.`
-    });
+    try {
+      setDocumentNonBlocking(docRef, eventData, { merge: true });
+      toast({
+        title: "Evento Salvo",
+        description: `O evento para ${format(date, "dd/MM")} foi atualizado com sucesso.`
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: "Ocorreu um problema ao tentar salvar o evento."
+      });
+    } finally {
+      setIsSavingEvent(false);
+    }
   };
 
   const handleAddHymn = (hymn: Omit<Hymn, "id">) => {
@@ -184,18 +196,19 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
       <div className="md:col-span-1">
         <Card className="sticky top-20 shadow-md border-primary/20 bg-white">
           <CardHeader className="pb-3 border-b bg-muted/30">
-            <CardTitle className="flex items-center gap-2 text-primary">
-              <CalendarHeart className="h-5 w-5" />
-              <div className="flex flex-col">
+            <CardTitle className="flex flex-col gap-1 text-primary">
+              <div className="flex items-center gap-2">
+                <CalendarHeart className="h-5 w-5" />
                 <span className="text-base sm:text-lg">
                   {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
                 </span>
-                {selectedEvent?.title && (
-                  <span className="text-xs sm:text-sm font-bold text-amber-600 animate-in fade-in slide-in-from-left-2 duration-300">
-                    {selectedEvent.title}
-                  </span>
-                )}
               </div>
+              {selectedEvent?.title && (
+                <div className="flex items-center gap-1 text-xs font-bold text-amber-600 animate-in fade-in slide-in-from-left-2 duration-300">
+                  <Star className="h-3 w-3 fill-amber-600" />
+                  {selectedEvent.title}
+                </div>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-4">
@@ -203,18 +216,25 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
             {/* Seção do Evento do Dia */}
             <div className="space-y-3 pb-2">
               <div className="flex items-center gap-2 text-amber-600 font-bold text-sm uppercase tracking-wider">
-                <Star className="h-4 w-4 fill-amber-600" /> Nome do Evento
+                <Star className="h-4 w-4 fill-amber-600" /> Evento Especial
               </div>
               {isAdmin ? (
                 <div className="flex gap-2">
                   <Input 
-                    placeholder="Ex: Culto de Jovens..." 
+                    placeholder="Nome do Evento (ex: Culto de Jovens)" 
                     value={eventTitle}
                     onChange={(e) => setEventTitle(e.target.value)}
-                    className="h-9 text-sm"
+                    className="h-9 text-sm focus-visible:ring-amber-500"
                   />
-                  <Button size="sm" variant="secondary" onClick={handleSaveEvent} title="Salvar Evento">
-                    <Save className="h-4 w-4" />
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    onClick={handleSaveEvent} 
+                    disabled={isSavingEvent}
+                    className="bg-amber-100 hover:bg-amber-200 text-amber-700"
+                    title="Salvar Nome do Evento"
+                  >
+                    {isSavingEvent ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   </Button>
                 </div>
               ) : selectedEvent?.title ? (
@@ -265,15 +285,16 @@ export function HymnCalendar({ targetConjunto }: HymnCalendarProps) {
             ) : (
               <div className="text-center text-muted-foreground py-10 px-4 border-2 border-dashed rounded-xl">
                 <Music className="mx-auto h-8 w-8 opacity-10 mb-2" />
-                <p className="text-xs">Nenhum hino agendado.</p>
+                <p className="text-xs">Nenhum hino agendado para esta data.</p>
               </div>
             )}
+            
             {isAdmin && date && (
               <Button
                 className="w-full shadow-sm mt-2"
                 onClick={() => setIsModalOpen(true)}
               >
-                <PlusCircle className="mr-2 h-4 w-4" />
+                <CalendarPlus className="mr-2 h-4 w-4" />
                 Agendar Hino
               </Button>
             )}
