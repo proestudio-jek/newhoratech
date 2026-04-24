@@ -28,6 +28,7 @@ import {
   Music2,
   UserCheck,
   Library,
+  User as UserIcon,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import React, { useState, useEffect } from "react";
@@ -279,6 +280,73 @@ function SiteHeader() {
   );
 }
 
+function BottomNav() {
+  const pathname = usePathname();
+  const { user, isAdmin } = useAuth();
+  
+  if (pathname === '/login' || pathname === '/signup') return null;
+
+  return (
+    <nav className="fixed bottom-0 left-0 z-50 w-full border-t bg-background/95 backdrop-blur-sm md:hidden pb-safe">
+      <div className="grid h-16 grid-cols-4 items-center justify-around px-2">
+        <Link 
+          href="/" 
+          className={cn(
+            "flex flex-col items-center gap-1 transition-colors", 
+            pathname === "/" ? "text-primary" : "text-muted-foreground"
+          )}
+        >
+          <Home className="size-5" />
+          <span className="text-[10px] font-medium">Início</span>
+        </Link>
+        <Link 
+          href="/calendar" 
+          className={cn(
+            "flex flex-col items-center gap-1 transition-colors", 
+            pathname === "/calendar" ? "text-primary" : "text-muted-foreground"
+          )}
+        >
+          <CalendarDays className="size-5" />
+          <span className="text-[10px] font-medium">Agenda</span>
+        </Link>
+        <Link 
+          href="/semente-da-fe" 
+          className={cn(
+            "flex flex-col items-center gap-1 transition-colors", 
+            ["/semente-da-fe", "/louvores-de-siao", "/grande-coral"].includes(pathname) ? "text-primary" : "text-muted-foreground"
+          )}
+        >
+          <Users className="size-5" />
+          <span className="text-[10px] font-medium">Conjuntos</span>
+        </Link>
+        {isAdmin ? (
+            <Link 
+              href="/admin/approvals" 
+              className={cn(
+                "flex flex-col items-center gap-1 transition-colors", 
+                pathname.startsWith("/admin") ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+                <UserCheck className="size-5" />
+                <span className="text-[10px] font-medium">Gestão</span>
+            </Link>
+        ) : (
+            <Link 
+              href={user ? "/semente-da-fe" : "/login"} 
+              className={cn(
+                "flex flex-col items-center gap-1 transition-colors", 
+                pathname === "/login" ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+                {user ? <UserIcon className="size-5" /> : <LogIn className="size-5" />}
+                <span className="text-[10px] font-medium">{user ? "Perfil" : "Entrar"}</span>
+            </Link>
+        )}
+      </div>
+    </nav>
+  );
+}
+
 function SiteFooter() {
   const pathname = usePathname();
   const [year, setYear] = useState<number | null>(null);
@@ -292,7 +360,7 @@ function SiteFooter() {
   }
 
   return (
-    <footer className="w-full border-t bg-background mt-auto">
+    <footer className="w-full border-t bg-background mt-auto hidden md:block">
       <div className="container py-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2">
           <Music className="h-6 w-6 text-primary" />
@@ -341,7 +409,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <SiteHeader />
-        <div className="flex-1">
+        <div className="flex-1 pb-16 md:pb-0">
         {isAuthPage ? (
           <main>{children}</main>
         ) : (
@@ -349,6 +417,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         )}
         </div>
       <SiteFooter />
+      <BottomNav />
     </div>
   );
 }
