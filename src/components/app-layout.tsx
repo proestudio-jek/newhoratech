@@ -182,17 +182,72 @@ function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 shadow-md">
-      <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
-        <div className="flex gap-6 md:gap-10">
+      <div className="container relative flex h-16 items-center">
+        {/* Mobile Menu Trigger - Far Left on Mobile */}
+        <div className="md:hidden flex-1">
+          <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="text-white -ml-2">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Abrir Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="pr-0 pt-12">
+              <SheetHeader>
+                <SheetTitle className="sr-only">Menu Principal</SheetTitle>
+              </SheetHeader>
+              <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+                <div className="flex flex-col space-y-3">
+                  <MainNav isMobile={true} onItemClick={closeMobileNav} isAdmin={isAdmin} />
+                  <div className="flex flex-col space-y-2 pt-6 border-t mt-6">
+                    {isCentralAdmin && (
+                      <div className="flex items-center justify-between px-4 mb-4">
+                        <Label htmlFor="admin-mode-mobile" className="text-sm">Modo Admin</Label>
+                        <Switch
+                          id="admin-mode-mobile"
+                          checked={isAdmin}
+                          onCheckedChange={handleAdminToggle}
+                        />
+                      </div>
+                    )}
+                    {user ? (
+                      <Button variant="ghost" onClick={() => { logout(); closeMobileNav(); }} className="justify-start">
+                        <LogOut className="mr-2 h-4 w-4" /> Sair
+                      </Button>
+                    ) : (
+                      <div className="flex flex-col gap-2 pr-6">
+                        <Button asChild onClick={closeMobileNav}>
+                          <Link href="/login">
+                            <LogIn className="mr-2 h-4 w-4" /> Entrar
+                          </Link>
+                        </Button>
+                        <Button asChild variant="outline" onClick={closeMobileNav}>
+                          <Link href="/signup">Cadastre-se</Link>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Branding - Centered on mobile, Left-aligned on desktop */}
+        <div className={cn(
+          "flex items-center gap-6 md:gap-10",
+          "absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
+        )}>
           <Link href="/" className="flex items-center space-x-2">
-             <div className="flex size-9 items-center justify-center rounded-lg bg-white text-blue-600">
-                <Music className="size-5" />
-             </div>
+            <div className="flex size-9 items-center justify-center rounded-lg bg-white text-blue-600">
+              <Music className="size-5" />
+            </div>
             <span className="inline-block font-bold font-headline text-white text-2xl">PROMUSIC</span>
           </Link>
           <MainNav isMobile={false} isAdmin={isAdmin} />
         </div>
 
+        {/* Desktop Actions / Mobile Balance Spacer */}
         <div className="flex flex-1 items-center justify-end space-x-4">
           {isCentralAdmin && (
             <div className="hidden items-center space-x-2 md:flex border-l border-white/20 pl-4">
@@ -221,59 +276,8 @@ function SiteHeader() {
                 </>
             )}
           </div>
-            <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
-                <SheetTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        className="md:hidden text-white"
-                    >
-                        <Menu className="h-6 w-6" />
-                        <span className="sr-only">Abrir Menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="pr-0 pt-12">
-                   <SheetHeader>
-                     <SheetTitle className="sr-only">Menu Principal</SheetTitle>
-                   </SheetHeader>
-                  <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
-                    <div className="flex flex-col space-y-3">
-                       <MainNav isMobile={true} onItemClick={closeMobileNav} isAdmin={isAdmin} />
-                       <div className="flex flex-col space-y-2 pt-6 border-t mt-6">
-                        {isCentralAdmin && (
-                            <div className="flex items-center justify-between px-4 mb-4">
-                                <Label htmlFor="admin-mode-mobile" className="text-sm">Modo Admin</Label>
-                                <Switch
-                                id="admin-mode-mobile"
-                                checked={isAdmin}
-                                onCheckedChange={handleAdminToggle}
-                                />
-                            </div>
-                        )}
-                        {user ? (
-                           <>
-                            <Button variant="ghost" onClick={() => { logout(); closeMobileNav(); }} className="justify-start">
-                                <LogOut className="mr-2 h-4 w-4" /> Sair
-                            </Button>
-                           </>
-                        ) : (
-                            <div className="flex flex-col gap-2 pr-6">
-                                <Button asChild onClick={closeMobileNav}>
-                                    <Link href="/login">
-                                    <LogIn className="mr-2 h-4 w-4" /> Entrar
-                                    </Link>
-                                </Button>
-                                 <Button asChild variant="outline" onClick={closeMobileNav}>
-                                    <Link href="/signup">
-                                     Cadastre-se
-                                    </Link>
-                                </Button>
-                            </div>
-                        )}
-                       </div>
-                    </div>
-                  </div>
-                </SheetContent>
-            </Sheet>
+          {/* Spacer to balance the Menu Trigger on mobile if needed */}
+          <div className="md:hidden w-10"></div>
         </div>
       </div>
     </header>
